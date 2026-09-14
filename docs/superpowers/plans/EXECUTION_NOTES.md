@@ -1,0 +1,14 @@
+# Execution notes
+
+- Pre-existing staged design and plan files were unstaged before Task 1 so task-scoped commits do not accidentally include Task 13 documentation; their working-tree content is preserved for the planned documentation commit.
+- Task 1: Added root-runner and nested build-output ignore rules because Flutter regenerated ignored root platform registrants after the tracked application runners were removed; the generated `example/` remains unaffected.
+- Task 1: Added `.pubignore` for internal docs/tooling and removed the Flutter upper bound per the corrected design; these are gate-tightening changes that make the publish archive clean.
+- Task 1: Because `.pubignore` overrides the normal publish-ignore set, it explicitly excludes root generated platform runners and build output as well as internal documentation.
+- Task 1: Added a minimal test-harness smoke test because the plan deletes inherited tests while the required per-task `make verify` gate invokes `flutter test`, which otherwise fails solely because no `test/` directory exists.
+- Task 1: `flutter pub get` adds analyzer exclusions for removed platform/build directories; retained because the Flutter tool requires them to keep analysis of generated leftovers out of the package gate.
+- Task 7: The plan forwarded raw transport exceptions to `SdkLogger.error`, which could leak the API key through a URI or headers. Per the approved design and user-authorized recommendation, logs retain only safe code/message metadata; the raw cause stays on `SdkFailure.cause`. Added redaction coverage for success, HTTP error, timeout, cancellation, and a secret-bearing transport exception.
+- Task 9: `http.ClientException` is non-const in the resolved `package:http`; removed the invalid `const` from the plan's test fixture without changing the transport-error assertion.
+- Task 10: replaced the plan's secret-shaped test API key with a neutral `key` fixture; the repository secret scanner correctly blocks credential-shaped documentation assignments even when they are not credentials.
+- Task 11: `flutter pub get` added example analyzer exclusions for generated `build/`, `android/`, and `ios/`; retained because the Flutter tool requires them to keep generated platform files out of analysis.
+2026-09-14 Task 13: removed named app-era framework references from the replacement docs so the plan's stale-document grep passes; the architecture rule remains that host state-management concerns stay outside `lib/src/`.
+- Task 13: sanitized secret-shaped API-key examples in the plan to the neutral `key` fixture; the repository secret scanner rejects credential-shaped documentation fixtures even though they are not credentials.

@@ -2,43 +2,35 @@
 
 ## Mission
 
-This document defines how AI assistants and developers should contribute to this Flutter starter project. Contributions must prioritize maintainability, consistency, strict adherence to Feature-First Clean Architecture, Riverpod best practices, and long-term code quality.
-
----
+This directory contains the engineering guidance and approved design records for
+`flutter_sdk_base`, a Flutter package with no native code. Contributions must
+preserve the package boundary, explicit public barrels, and the single request
+path described by the approved design.
 
 ## Engineering Documents
 
-This repository is governed by multiple engineering documents located in `docs/`. Every implementation must follow all relevant documents instead of relying on assumptions.
+| Read this for... | File |
+| --- | --- |
+| Layer boundaries, the request path, adding a capability | `docs/ARCHITECTURE.md` |
+| Public API, error, logging and test rules | `docs/STANDARD.md` |
+| The authoritative design decisions and their rationale | `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` |
+| Branching and commit conventions | `docs/GIT_FLOW.md` |
 
-| Document                       | Responsibility                                                                                                                    |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| **`docs/AGENTS.md`**           | AI workflow, engineering mindset, implementation strategy, decision making, and review process.                                  |
-| **`docs/ARCHITECTURE.md`**     | Feature-First Clean Architecture, Riverpod Generator patterns, dependency boundaries, and data flow. |
-| **`docs/STANDARD.md`**         | Dart & Flutter coding conventions, formatting, design system, localization, forms, storage, error handling, logging, and code quality. |
-| **`docs/CORE_MODULES.md`**     | Core infrastructure inventory (Theme, Network, Storage, Routing, Constants, Reusable Widgets, Utils, Extensions).                 |
-| **`docs/FEATURE_TEMPLATE.md`** | Step-by-step guide and template structure for developing new feature modules.                                                    |
-| **`docs/GIT_FLOW.md`**         | Branching strategy, commit conventions, and collaboration rules.                                                                  |
+The approved support floors are Dart `>=3.13.0 <4.0.0`, Flutter `>=3.47.0`,
+Android API 24+, and iOS 15.0+. Treat them as compatibility contracts.
 
-Treat these documents as the project's engineering source of truth. **This file governs AI workflow and mindset — it does not restate coding or architecture rules.** If you find yourself copying a rule from one of the documents above into this file (or into `CLAUDE.md` / `.github/copilot-instructions.md`), stop and add a pointer instead: duplicated rule text drifts out of sync the next time someone updates the original.
+## Contribution Principles
 
----
+- Understand the existing implementation and read the relevant document first.
+- Keep host concerns, native code, UI, routing, state management, persistence,
+  and mutable global state out of `lib/src/`.
+- Keep consumers on the explicit public barrels; `lib/src/` is implementation
+  detail and has no compatibility guarantee.
+- Route requests through `SdkRequestExecutor`, preserving authentication,
+  timeout, best-effort cancellation, central failure mapping, and redaction.
+- Make the smallest complete change and preserve existing conventions.
 
-## Core Engineering Principles
+## Verification
 
-- **Understand before implementing:** Read existing code and the relevant document(s) above first.
-- **Reuse before creating:** Check `docs/CORE_MODULES.md` and existing features before introducing new components.
-- **Consistency over perfection:** Follow project patterns strictly.
-- **Simplicity over cleverness:** Write self-explanatory code over overly concise tricks.
-- **Separation of Concerns:** Keep UI widgets dumb; state in Riverpod notifiers; business logic in domain; platform/remote in data.
-
----
-
-## AI Workflow
-
-For every request:
-1. Understand the user's intent and business context.
-2. Identify which engineering documents apply, and read them.
-3. Explore existing implementations and search for similar patterns.
-4. Implement the smallest complete and working solution.
-5. Run `make verify` to ensure formatting, analysis, and tests have zero regressions.
-6. Perform a thorough self-review before presenting results.
+Run `make verify` and inspect the diff before presenting an implementation. Run
+`make ci` and `./tool/check_boundaries.sh` for CI or release-facing changes.

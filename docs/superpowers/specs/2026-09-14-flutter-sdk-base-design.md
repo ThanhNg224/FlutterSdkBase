@@ -1,6 +1,17 @@
 # Flutter SDK Base Design
 
-**Status:** Proposed — requires user review before implementation
+**Status:** Approved — reviewed 2026-09-14, amended, cleared for implementation
+
+**Review amendments (2026-09-14).** Applied after review; each resolves a defect in the Proposed draft.
+
+1. **Cancellation is best-effort and says so.** The draft promised prompt cancellation that `package:http` cannot deliver (§6).
+2. **Platform floors are derived, not picked.** The draft's Android API 21 and iOS 14.0 matched neither Flutter 3.47 nor the repo; the real values are 24 and 15.0 (§2).
+3. **Error taxonomy covers non-429 4xx.** The draft had no code for 401/403/404, so they would have collapsed into `server` (§5).
+4. **The reference slice authenticates.** The draft retained redaction while carrying no credential, leaving it dead code; `SdkConfig.apiKey` makes it a tested invariant (§1, §4, §5).
+5. `SdkHttpTransport` gained `close()` — the client owns the transport and had no way to release it (§6).
+6. `example/` is generated fresh, never migrated, and owns the `implementation_imports` lint (§8, §9, §10).
+7. The artifact-consumer gate uses an extracted archive instead of a temporary Git dependency (§10).
+8. `SdkHealth.checkedAt` gained an internal clock seam so the fake transport is genuinely deterministic (§4).
 
 **Goal:** Transform Flutter Core Base into a publishable Flutter SDK template that demonstrates a small, clean HTTP capability while remaining independent of host navigation, UI, state management, persistence, and native code.
 
@@ -14,7 +25,10 @@ The v1 reference vertical slice is a health capability:
 
 ```dart
 final sdk = SdkClient(
-  config: SdkConfig(baseUri: Uri.parse('https://api.example.com')),
+  config: SdkConfig(
+    baseUri: Uri.parse('https://api.example.com'),
+    apiKey: hostSuppliedKey,
+  ),
 );
 
 final health = await sdk.health.check();
@@ -27,7 +41,8 @@ await sdk.close();
 
 - A Flutter package that may import `package:flutter/foundation.dart` only from Flutter.
 - A public, instance-based client with a built-in HTTP implementation hidden behind SDK-owned transport value types.
-- Safe logging, typed failures wrapped in exceptions, cancellation, timeout, multiple concurrent client instances, a fake transport, and a consumer example.
+- Host-supplied API-key authentication applied to every request, with the key redacted in every log line the SDK emits.
+- Safe logging, typed failures wrapped in exceptions, best-effort cancellation, timeout, multiple concurrent client instances, a fake transport, and a consumer example.
 - Android and iOS support for the package's v1 release.
 
 ### Explicitly out of scope
@@ -46,12 +61,18 @@ The package declares these floors:
 | Surface | v1 commitment |
 | --- | --- |
 | Dart | `>=3.13.0 <4.0.0` |
-| Flutter | `>=3.47.0 <4.0.0` |
-| Android host | API 21 or higher |
-| iOS host | iOS 14.0 or higher |
+| Flutter | `>=3.47.0` (no upper bound) |
+| Android host | API 24 or higher |
+| iOS host | iOS 15.0 or higher |
 | Supported release platforms | Android and iOS |
 
-The root package contains no Android or iOS runner. The `example/` host carries these deployment floors and CI must build it for both supported platforms. A package implementation must not use `dart:io` or platform-specific APIs.
+The Flutter constraint deliberately carries **no upper bound**. Pub deprecates upper bounds on the Flutter SDK constraint (`dart.dev/go/flutter-upper-bound-deprecation`) and `pub publish` warns on one; a `<4.0.0` here would also lock hosts out of a future major for no demonstrated incompatibility. The Dart constraint keeps its `<4.0.0` — that form is conventional and draws no warning.
+
+`docs/` holds this specification, the implementation plan, and internal engineering notes. None of it belongs in the published archive, so a root `.pubignore` containing `docs/` excludes it. This is not a workaround for pub's "rename `docs` to `doc`" warning: the directory is genuinely internal, and excluding it also keeps the archive small. Verified empirically — with `.pubignore` in place and no Flutter upper bound, `flutter pub publish --dry-run` reports `Package has 0 warnings.`
+
+The Android and iOS floors are **derived from the declared Flutter floor, not chosen independently**. For Flutter 3.47 they are read from `packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt` (`minSdkVersion = 24`) and the `flutter create` iOS template (`IPHONEOS_DEPLOYMENT_TARGET = 15.0`). Raising the Flutter floor re-derives both numbers; neither may be hand-picked. The `ios/` folder inherited from the app base declares 13.0 and is stale — it is deleted rather than corrected, because `example/` is generated fresh.
+
+The root package contains no Android or iOS runner. The `example/` host carries these deployment floors and CI must build it for both supported platforms. A package implementation must not use `dart:io` or platform-specific APIs; package tests may, because they never ship.
 
 Semantic versioning is mandatory from the first released version:
 
@@ -73,11 +94,13 @@ lib/
 └── src/
     ├── client/
     │   ├── sdk_client.dart
-    │   └── sdk_config.dart
+    │   ├── sdk_config.dart
+    │   └── sdk_request_executor.dart
     ├── health/
     │   ├── sdk_health.dart
     │   └── sdk_health_service.dart
     ├── transport/
+    │   ├── fake_sdk_http_transport.dart
     │   ├── sdk_http_call.dart
     │   ├── sdk_http_request.dart
     │   ├── sdk_http_response.dart
@@ -86,17 +109,21 @@ lib/
     ├── errors/
     │   ├── sdk_error_codes.dart
     │   ├── sdk_exception.dart
-    │   └── sdk_failure.dart
-    └── logging/
-        ├── sdk_log_level.dart
-        ├── sdk_logger.dart
-        └── silent_sdk_logger.dart
+    │   ├── sdk_failure.dart
+    │   └── sdk_status_mapping.dart
+    ├── logging/
+    │   ├── sdk_log_level.dart
+    │   ├── sdk_logger.dart
+    │   ├── sdk_redaction.dart
+    │   └── silent_sdk_logger.dart
+    └── util/
+        └── sdk_uri.dart
 example/                              # independent Flutter host app
 test/
 docs/
 ```
 
-`flutter_sdk_base.dart` exports `SdkClient`, `SdkConfig`, `SdkHealthService`, `SdkHealth`, `SdkHttpTransport`, `SdkHttpCall`, `SdkHttpRequest`, `SdkHttpResponse`, `SdkLogger`, `SdkLogLevel`, `SdkFailure`, `SdkException`, and `SdkErrorCodes`. The testing barrel exports `FakeSdkHttpTransport` and its deterministic response handler only.
+`flutter_sdk_base.dart` exports `SdkClient`, `SdkConfig`, `SdkHealthService`, `SdkHealth`, `SdkHttpTransport`, `SdkHttpCall`, `SdkHttpRequest`, `SdkHttpResponse`, `SdkLogger`, `SdkLogLevel`, `SdkFailure`, `SdkException`, and `SdkErrorCodes`. The testing barrel exports `FakeSdkHttpTransport` only. Its deterministic behaviour is configured through that class's own methods; no separate handler type is exported.
 
 `lib/src/` may import `package:flutter/foundation.dart` for `kDebugMode`, `debugPrint`, and `@visibleForTesting`. It must not import `package:flutter/material.dart`, `package:flutter/widgets.dart`, or `package:flutter/services.dart`.
 
@@ -120,10 +147,12 @@ final class SdkClient {
 final class SdkConfig {
   const SdkConfig({
     required this.baseUri,
+    required this.apiKey,
     this.requestTimeout = const Duration(seconds: 15),
   });
 
   final Uri baseUri;
+  final String apiKey;
   final Duration requestTimeout;
 }
 
@@ -143,6 +172,8 @@ final class SdkHealth {
   final DateTime checkedAt;
 }
 ```
+
+`SdkHealth.checkedAt` is the moment the SDK observed the response. The clock is an internal seam (`DateTime Function()`) injected through an `@internal`-annotated constructor so package tests can freeze it. `SdkClient`'s public constructor exposes no clock parameter, and the analyzer flags any host that reaches for the internal one.
 
 Public operations return their success value and throw `SdkException` for expected runtime failures. The SDK never mixes `SdkResult<T>` and thrown failures. Every public operation documents its `SdkException` behavior with `@throws`.
 
@@ -177,15 +208,32 @@ abstract final class SdkErrorCodes {
   static const String cancelled = 'cancelled';
   static const String timeout = 'timeout';
   static const String transport = 'transport';
-  static const String server = 'server';
+  static const String unauthorized = 'unauthorized';
+  static const String client = 'client';
   static const String rateLimited = 'rate_limited';
+  static const String server = 'server';
   static const String invalidResponse = 'invalid_response';
 }
 ```
 
 `message` is concise English diagnostic text for developers. It is never localized or intended for end-user UI. Hosts map `code` to their own copy. `cause` is diagnostic-only: its type and contents have no compatibility guarantee and hosts must not use it for control flow.
 
-The SDK calculates `isRetryable` consistently: transport failures, HTTP 429, and HTTP 5xx are `true`; other HTTP 4xx and malformed successful responses are `false`. The SDK never retries automatically.
+The SDK maps every outcome through one table, so `code` and `isRetryable` are never decided ad hoc at a call site:
+
+| Outcome | `code` | `isRetryable` |
+| --- | --- | --- |
+| Transport/socket failure | `transport` | `true` |
+| `SdkConfig.requestTimeout` elapsed | `timeout` | `true` |
+| Cancelled by `close()` | `cancelled` | `false` |
+| HTTP 401 or 403 | `unauthorized` | `false` |
+| HTTP 429 | `rate_limited` | `true` |
+| Other HTTP 4xx | `client` | `false` |
+| HTTP 5xx | `server` | `true` |
+| 2xx with a body the SDK cannot parse | `invalid_response` | `false` |
+
+The SDK never retries automatically; `isRetryable` is advice for the host.
+
+`SdkFailure.toString()` renders `code`, `statusCode`, and `message` only. It must never render `cause`, because `cause` may carry a URI or header captured from a failing request.
 
 ```dart
 abstract interface class SdkLogger {
@@ -200,6 +248,8 @@ abstract interface class SdkLogger {
 
 Logging is no-op by default. A host may inject `SdkLogger`; SDK logs must omit credentials, headers, request/response bodies, and other sensitive values before calling it. Existing redaction utilities and silent/debug sink concepts may be reused internally, but `Redacted`, log records, and sinks are not public API.
 
+Because v1 carries a real credential, redaction is a tested invariant rather than a latent utility: `SdkConfig.apiKey` must never appear verbatim in any record passed to an injected `SdkLogger`, and a test asserts this across the success, HTTP-error, timeout, and cancellation paths.
+
 ## 6. HTTP Transport, Timeout, and Lifecycle
 
 The public transport boundary contains no Dio or `package:http` types:
@@ -207,6 +257,8 @@ The public transport boundary contains no Dio or `package:http` types:
 ```dart
 abstract interface class SdkHttpTransport {
   SdkHttpCall open(SdkHttpRequest request);
+
+  Future<void> close();
 }
 
 abstract interface class SdkHttpCall {
@@ -238,16 +290,21 @@ final class SdkHttpResponse {
   final int statusCode;
   final Map<String, String> headers;
   final Uint8List body;
+
+  /// The body decoded as UTF-8, tolerating malformed bytes.
+  String get bodyAsString;
 }
 ```
 
 The sole v1 body representation is bytes. There is no file upload, multipart, stream, or streaming response support. Adding one later requires a deliberate, versioned contract extension rather than widening this reference slice accidentally.
 
-`package:http: ^1.0.0` is the internal default transport implementation. It is never mentioned by a public signature, and a host can inject a custom `SdkHttpTransport`. A transport supplied to `SdkClient` is owned by that client and must support cancellation through `SdkHttpCall.cancel()`.
+`package:http: ^1.0.0` is the internal default transport implementation. It is never mentioned by a public signature, and a host can inject a custom `SdkHttpTransport`. A transport supplied to `SdkClient` is owned by that client: the client calls `SdkHttpTransport.close()` during its own `close()`, so a host must not reuse one transport instance across clients.
+
+**Cancellation is best-effort, and this is a documented public promise, not an implementation detail.** `package:http` has no per-request abort: `Client.close()` tears down every request sharing that client. `SdkHttpCall.cancel()` therefore means *the SDK stops waiting* — the pending operation completes with `SdkErrorCodes.cancelled` and the response is discarded — while the underlying socket may remain open until the server replies. A host must not read `cancel()` as a guarantee that the server did not receive or process the request. This is stated in the `SdkHttpCall.cancel()` API doc and in `README.md`. The alternative, one `http.Client` per request, was rejected: it would cost a fresh TCP and TLS handshake on every call, which is the wrong trade on mobile.
 
 The SDK, not the transport, enforces `SdkConfig.requestTimeout`: on timeout it calls `cancel()` and throws `SdkException` with `SdkErrorCodes.timeout`. A transport must complete cancellation promptly; the SDK maps a cancellation caused by `close()` to `SdkErrorCodes.cancelled` for the affected in-flight operations.
 
-`close()` is idempotent. It rejects new calls with `StateError`, calls `cancel()` for every active `SdkHttpCall`, waits for their cancellation/teardown, and then completes. It neither persists state nor retries or restarts those operations.
+`close()` is idempotent. It rejects new calls with `StateError`, calls `cancel()` for every active `SdkHttpCall`, awaits those `cancel()` futures, closes the owned transport, and then completes. Awaiting `cancel()` means awaiting the SDK's own teardown, not socket termination — see the best-effort rule above. `close()` neither persists state nor retries or restarts those operations.
 
 ## 7. Persistence and Connectivity Rules
 
@@ -259,7 +316,9 @@ If a future product capability demonstrably requires persistence, it first intro
 
 ## 8. Consumer-First Example and Test Doubles
 
-The `example/` Flutter app is an independent host, not an SDK-owned UI. It imports `package:flutter_sdk_base/flutter_sdk_base.dart`; it must never import `lib/src/` or use a relative import into the package.
+The `example/` Flutter app is an independent host, not an SDK-owned UI. **It is generated fresh with `flutter create`, never migrated from the existing app.** Moving the inherited host would drag `home_screen`, `settings`, `l10n`, and theming back in — the exact concerns being removed. It imports `package:flutter_sdk_base/flutter_sdk_base.dart`; it must never import `lib/src/` or use a relative import into the package.
+
+`example/` carries its own `pubspec.yaml` and its own `analysis_options.yaml`. The `implementation_imports` lint belongs in the **example's** analyzer config, not the package's: the lint fires at the import site, so enabling it only on the package would never inspect the consumer.
 
 Its initial flow creates a client, calls `sdk.health.check()`, renders a host-owned result, handles `SdkException` by mapping its `failure.code` to host copy, and calls `close()` during teardown. The example uses `FakeSdkHttpTransport` so it remains deterministic without a real backend.
 
@@ -270,7 +329,7 @@ The fake provides queued or handler-defined `SdkHttpResponse`/failure behavior a
 The clone is initialized with the existing quick-start script solely to establish the new project identity. The SDK migration then removes app-only artifacts:
 
 - `lib/main.dart`, `lib/app/`, `lib/features/`, `lib/l10n/`, `lib/core/routing/`, `lib/core/theme/`, `lib/core/widgets/`, settings/config controllers, app storage providers, app network providers, and all generated files coupled to them.
-- Android, iOS, macOS, Windows, Linux, Web, branding assets, flavor configuration, application launchers, `init_project.py`, and app deployment workflows move out of the package root. The new `example/` becomes the only Flutter application and owns its platform folders.
+- Android, iOS, macOS, Windows, Linux, Web, branding assets, flavor configuration, application launchers, `init_project.py`, and app deployment workflows are **deleted** from the package root. The new `example/`, generated by `flutter create`, becomes the only Flutter application and owns freshly generated platform folders at the derived floors. Nothing is moved; the inherited platform folders carry stale deployment targets and flavor wiring.
 - `flutter_riverpod`, `riverpod_annotation`, `go_router`, `dio`, `fpdart`, `freezed`, `json_serializable`, storage/connectivity plugins, fonts, animation, launcher icon, splash, localization, and their generators are removed unless a later public SDK requirement proves one is necessary.
 
 The retained ideas are strict analysis, focused tests, release-safe logging/redaction, error mapping, documentation discipline, and CI. The following existing code is candidate source material only and must be adapted behind the new contracts: `lib/core/logging/`, `lib/core/errors/`, `lib/core/utils/redaction.dart`, and the current network tests. No app-specific type crosses the new public boundary.
@@ -282,12 +341,12 @@ Existing app architecture, standards, core-module, and feature-template document
 The migration replaces application gates with package gates:
 
 1. `dart format --output=none --set-exit-if-changed .`, `flutter analyze --fatal-infos`, and `flutter test` pass.
-2. Analyzer enables strict inference/casts/raw types, `public_member_api_docs`, and `implementation_imports`.
+2. The package analyzer enables strict inference/casts/raw types and `public_member_api_docs`. The `example/` analyzer enables `implementation_imports`.
 3. A repository check fails if a file under `lib/src/` imports `flutter/material.dart`, `flutter/widgets.dart`, or `flutter/services.dart`.
 4. A repository check fails if `example/` imports `package:flutter_sdk_base/src/` or uses a relative import into package source.
-5. `flutter pub publish --dry-run` passes. The workflow never runs a real publish command.
-6. CI creates an isolated archive snapshot of the package, exposes it through a temporary Git dependency, and builds/tests the example against that snapshot rather than a path dependency. This proves the example consumes only the public artifact surface.
-7. CI builds the example Android host with `minSdk 21`; a macOS CI job builds the iOS host with deployment target 14.0. Both jobs use the declared Flutter floor.
+5. `flutter pub publish --dry-run` reports `Package has 0 warnings.`, and the package declares no `publish_to: none` that would disable it. Reaching zero requires a root `.pubignore` excluding `docs/` and a Flutter constraint with no upper bound; both are deliberate, not concessions. The workflow never runs a publish command without `--dry-run`.
+6. CI packs the publishable archive, extracts it to a temporary directory, and resolves `example/` against **that extraction** instead of the working tree. This proves the example builds from only the files that would actually ship. Combined with gates 3 and 4 it replaces the heavier temporary-Git-dependency scheme: the archive proves file completeness, the lint and grep prove the example never reaches into `lib/src/`.
+7. CI builds the example Android host at `minSdk 24`; a macOS CI job builds the iOS host at deployment target 15.0. Both jobs pin the declared Flutter floor. If a future Flutter floor changes either derived number, this gate is what catches it.
 
 `README.md` describes installation, minimal usage, error handling, lifecycle, support matrix, and the testing barrel. `CHANGELOG.md`, `LICENSE`, public API docs, and compatibility policy are release requirements, not deferred polish.
 
@@ -295,11 +354,11 @@ The migration replaces application gates with package gates:
 
 Implementation must be consumer-first:
 
-1. Replace app-oriented package metadata and root documentation with SDK metadata and the compatibility policy.
+1. Delete app concerns and dependencies, then replace app-oriented package metadata and root documentation with SDK metadata and the compatibility policy. `pubspec.yaml` takes an SDK description, version `0.1.0` (no `+build` suffix — build numbers belong to applications), and `repository` / `issue_tracker` / `homepage` fields. **`publish_to: none` is removed immediately**, because `pub publish` refuses to run at all — including `--dry-run` — on a package that declares it, and gate 5 must be live from the first commit. Removing it does not publish anything: publishing requires `flutter pub publish` without `--dry-run` plus pub.dev credentials, and CI never issues that command.
 2. Write public barrel declarations, their API documentation, and example integration code before porting any app implementation.
 3. Write failing consumer and unit tests for the facade, exception contract, transport mapping, timeout, cancellation, close behavior, multiple instances, and fake transport.
 4. Implement SDK-owned contracts and the internal `package:http` transport under `lib/src/`.
-5. Remove app concerns and dependencies; move the independent host into `example/`.
+5. Generate `example/` fresh with `flutter create` and write its integration against the public barrel only.
 6. Add boundary, publish dry-run, isolated-artifact consumer, Android, and iOS CI gates.
 7. Run every release gate and review the public API as a consumer before a `1.0.0` release.
 

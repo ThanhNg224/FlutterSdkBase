@@ -1,26 +1,28 @@
 # CLAUDE.md
 
 ## Project Context
-This is a production-grade Flutter starter application adhering strictly to **Feature-First Clean Architecture**, **Riverpod Generator (`@riverpod`)**, and **Freezed**.
 
----
+This is `flutter_sdk_base`, a Flutter package with no native code. The package
+exposes a small, instance-based SDK through explicit public barrels and keeps
+implementation details under `lib/src/`.
 
 ## Source of Truth
 
-The engineering rules live in `docs/`, not in this file. Read the relevant document **before** implementing anything, and if a rule needs to change, edit it in `docs/` — not here — so this file never drifts out of sync with the real rules.
+The engineering rules live in `docs/` and the approved design documents. Read
+the relevant document before implementing anything, and update the owning
+document when a rule changes.
 
 | Read this for... | File |
 | --- | --- |
-| Layer boundaries, Riverpod patterns, dependency rules | `docs/ARCHITECTURE.md` |
-| Design system, localization, forms, storage, error handling, logging, code quality | `docs/STANDARD.md` |
-| The current inventory of `core/` (reusable widgets, utils, extensions) — check before creating anything new | `docs/CORE_MODULES.md` |
-| Steps and structure for a new feature module | `docs/FEATURE_TEMPLATE.md` |
+| Layer boundaries, the request path, adding a capability | `docs/ARCHITECTURE.md` |
+| Public API, error, logging and test rules | `docs/STANDARD.md` |
+| The authoritative design decisions and their rationale | `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` |
 | Branching and commit conventions | `docs/GIT_FLOW.md` |
 
----
-
 ## Commands
-- **Regenerate and format code:** `make codegen`
-- **Analyze code:** `make analyze` (Must have 0 warnings/errors)
-- **Run all tests:** `make test`
-- **Run single test:** `flutter test test/path/to/test_file.dart`
+
+- **Analyze:** `make analyze` (must report 0 issues)
+- **Test:** `make test`
+- **Full local gate:** `make verify`
+- **CI-equivalent:** `make ci`
+- **Single test:** `flutter test test/path/to/test_file.dart`
