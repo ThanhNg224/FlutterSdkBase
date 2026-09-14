@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/theme/app_colors.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/app_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
 
 /// Replaces Flutter's default red/grey box when a subtree fails to build.
 ///

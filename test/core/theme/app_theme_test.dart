@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_core_base/core/theme/app_colors.dart';
-import 'package:flutter_core_base/core/theme/app_semantic_colors.dart';
-import 'package:flutter_core_base/core/theme/app_theme.dart';
+import 'package:flutter_sdk_base/core/theme/app_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_semantic_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

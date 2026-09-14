@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/app/app.dart';
-import 'package:flutter_core_base/app/observers/app_provider_observer.dart';
-import 'package:flutter_core_base/core/logging/logging.dart';
-import 'package:flutter_core_base/core/storage/storage_providers.dart';
-import 'package:flutter_core_base/core/widgets/app_error_widget.dart';
+import 'package:flutter_sdk_base/app/app.dart';
+import 'package:flutter_sdk_base/app/observers/app_provider_observer.dart';
+import 'package:flutter_sdk_base/core/logging/logging.dart';
+import 'package:flutter_sdk_base/core/storage/storage_providers.dart';
+import 'package:flutter_sdk_base/core/widgets/app_error_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -33,7 +33,7 @@ void main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPrefs),
       ],
-      child: const FlutterCoreBaseApp(),
+      child: const FlutterSdkBaseApp(),
     ),
   );
 }

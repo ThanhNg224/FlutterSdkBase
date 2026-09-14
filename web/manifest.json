@@ -1,6 +1,6 @@
 {
-    "name": "Flutter Core Base",
-    "short_name": "FlutterCoreBase",
+    "name": "Flutter SDK Base",
+    "short_name": "FlutterSdkBase",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1e1b18",

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/extensions/context_extensions.dart';
-import 'package:flutter_core_base/core/theme/app_semantic_colors.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/extensions/context_extensions.dart';
+import 'package:flutter_sdk_base/core/theme/app_semantic_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
 
 /// Centralized modal bottom sheet: rounded top corners, drag handle, an
 /// optional icon/title header with a close action, and keyboard-safe

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_core_base/core/errors/app_exception.dart';
-import 'package:flutter_core_base/core/errors/failure.dart';
-import 'package:flutter_core_base/core/logging/logging.dart';
+import 'package:flutter_sdk_base/core/errors/app_exception.dart';
+import 'package:flutter_sdk_base/core/errors/failure.dart';
+import 'package:flutter_sdk_base/core/logging/logging.dart';
 import 'package:fpdart/fpdart.dart';
 
 const _log = AppLogger('Errors');

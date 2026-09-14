@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:flutter_core_base/core/constants/api_endpoints.dart';
+import 'package:flutter_sdk_base/core/constants/api_endpoints.dart';
 
 part 'app_config.freezed.dart';
 

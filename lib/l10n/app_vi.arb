@@ -1,7 +1,7 @@
 {
   "@@locale": "vi",
 
-  "appName": "Flutter Core Base",
+  "appName": "Flutter SDK Base",
   "settingsTooltip": "Cài đặt",
   "catalogTitle": "Danh mục tính năng Core",
   "catalogSubtitle": "Khám phá các module kiến trúc, quản lý trạng thái và Clean Architecture trong dự án base.",

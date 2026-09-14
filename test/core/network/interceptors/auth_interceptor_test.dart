@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_core_base/core/config/app_config.dart';
-import 'package:flutter_core_base/core/network/interceptors/auth_interceptor.dart';
+import 'package:flutter_sdk_base/core/config/app_config.dart';
+import 'package:flutter_sdk_base/core/network/interceptors/auth_interceptor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class RecordingAdapter implements HttpClientAdapter {

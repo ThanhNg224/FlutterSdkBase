@@ -23,7 +23,7 @@ android {
         null
     }
 
-    namespace = "com.thanhng224.fluttercorebase"
+    namespace = "com.thanhng224.fluttersdkbase"
     // flutter_secure_storage currently requires Android SDK 37; keep the base
     // compatible with older Flutter defaults while honoring that dependency.
     compileSdk = maxOf(flutter.compileSdkVersion, 37)
@@ -41,7 +41,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.thanhng224.fluttercorebase"
+        applicationId = "com.thanhng224.fluttersdkbase"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -58,11 +58,11 @@ android {
         create("dev") {
             dimension = "environment"
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "Flutter Core Base Dev")
+            resValue("string", "app_name", "Flutter SDK Base Dev")
         }
         create("prod") {
             dimension = "environment"
-            resValue("string", "app_name", "Flutter Core Base")
+            resValue("string", "app_name", "Flutter SDK Base")
         }
     }
 

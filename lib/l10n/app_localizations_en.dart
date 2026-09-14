@@ -10,7 +10,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'Flutter Core Base';
+  String get appName => 'Flutter SDK Base';
 
   @override
   String get settingsTooltip => 'Settings';

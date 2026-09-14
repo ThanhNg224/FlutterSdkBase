@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/errors/failure.dart';
-import 'package:flutter_core_base/core/errors/failure_l10n.dart';
-import 'package:flutter_core_base/core/extensions/context_extensions.dart';
-import 'package:flutter_core_base/core/logging/logging.dart';
-import 'package:flutter_core_base/core/theme/app_colors.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
-import 'package:flutter_core_base/core/theme/app_typography.dart';
+import 'package:flutter_sdk_base/core/errors/failure.dart';
+import 'package:flutter_sdk_base/core/errors/failure_l10n.dart';
+import 'package:flutter_sdk_base/core/extensions/context_extensions.dart';
+import 'package:flutter_sdk_base/core/logging/logging.dart';
+import 'package:flutter_sdk_base/core/theme/app_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _log = AppLogger('AsyncValueWidget');

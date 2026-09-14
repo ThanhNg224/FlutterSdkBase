@@ -1,4 +1,4 @@
-import 'package:flutter_core_base/core/constants/api_endpoints.dart';
+import 'package:flutter_sdk_base/core/constants/api_endpoints.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

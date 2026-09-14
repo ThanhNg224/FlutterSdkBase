@@ -1,4 +1,4 @@
-import 'package:flutter_core_base/core/logging/log_level.dart';
+import 'package:flutter_sdk_base/core/logging/log_level.dart';
 
 /// Policy determining whether a log record can be emitted.
 final class LogPolicy {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/theme/app_semantic_colors.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/app_semantic_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
 
 abstract class AppSnackbar {
   static void showSuccess(BuildContext context, String message) {

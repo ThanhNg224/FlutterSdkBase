@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_core_base/core/logging/logging.dart';
+import 'package:flutter_sdk_base/core/logging/logging.dart';
 
 import '../../support/recording_log_sink.dart';
 

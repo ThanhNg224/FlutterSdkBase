@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_core_base/core/errors/failure.dart';
-import 'package:flutter_core_base/core/errors/failure_l10n.dart';
-import 'package:flutter_core_base/l10n/app_localizations.dart';
+import 'package:flutter_sdk_base/core/errors/failure.dart';
+import 'package:flutter_sdk_base/core/errors/failure_l10n.dart';
+import 'package:flutter_sdk_base/l10n/app_localizations.dart';
 
 void main() {
   const failures = <Failure>[

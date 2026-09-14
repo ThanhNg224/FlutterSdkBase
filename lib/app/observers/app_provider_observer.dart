@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_core_base/core/logging/logging.dart';
+import 'package:flutter_sdk_base/core/logging/logging.dart';
 
 const _log = AppLogger('Riverpod');
 

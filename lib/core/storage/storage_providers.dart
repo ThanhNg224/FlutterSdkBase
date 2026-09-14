@@ -1,5 +1,5 @@
-import 'package:flutter_core_base/core/storage/local_storage_service.dart';
-import 'package:flutter_core_base/core/storage/secure_storage_service.dart';
+import 'package:flutter_sdk_base/core/storage/local_storage_service.dart';
+import 'package:flutter_sdk_base/core/storage/secure_storage_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_core_base/core/config/app_config.dart';
-import 'package:flutter_core_base/core/logging/logging.dart';
+import 'package:flutter_sdk_base/core/config/app_config.dart';
+import 'package:flutter_sdk_base/core/logging/logging.dart';
 
 const _log = AppLogger('HTTP.Auth');
 

@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_core_base/core/logging/log_level.dart';
-import 'package:flutter_core_base/core/logging/log_policy.dart';
-import 'package:flutter_core_base/core/logging/log_record.dart';
-import 'package:flutter_core_base/core/logging/log_sink.dart';
-import 'package:flutter_core_base/core/logging/redacted.dart';
+import 'package:flutter_sdk_base/core/logging/log_level.dart';
+import 'package:flutter_sdk_base/core/logging/log_policy.dart';
+import 'package:flutter_sdk_base/core/logging/log_record.dart';
+import 'package:flutter_sdk_base/core/logging/log_sink.dart';
+import 'package:flutter_sdk_base/core/logging/redacted.dart';
 
 /// Application logger with structured data and level filtering.
 /// Redaction is enforced via [Redacted] data mapping.

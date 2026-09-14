@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
 
 /// Reusable container card for the design system.
 /// Takes its styling from `cardTheme`.

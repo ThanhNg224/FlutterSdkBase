@@ -1,5 +1,5 @@
-import 'package:flutter_core_base/core/logging/log_level.dart';
-import 'package:flutter_core_base/core/logging/redacted.dart';
+import 'package:flutter_sdk_base/core/logging/log_level.dart';
+import 'package:flutter_sdk_base/core/logging/redacted.dart';
 
 /// One immutable log event, plus the single place its text layout is decided.
 ///

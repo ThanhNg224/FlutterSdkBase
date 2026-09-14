@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_core_base/core/utils/redaction.dart';
+import 'package:flutter_sdk_base/core/utils/redaction.dart';
 
 void main() {
   group('Redaction.secret', () {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_core_base/core/theme/app_semantic_colors.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/app_semantic_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
 
 class AppShimmer extends StatelessWidget {
   const AppShimmer({super.key, required this.height, this.width, this.borderRadius = AppSpacing.radiusM});

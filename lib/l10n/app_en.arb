@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appName": "Flutter Core Base",
+  "appName": "Flutter SDK Base",
   "settingsTooltip": "Settings",
   "catalogTitle": "Core Feature Catalog",
   "catalogSubtitle": "Explore integrated architectural modules, state management, and Clean Architecture in this starter base.",

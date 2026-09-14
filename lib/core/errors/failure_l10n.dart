@@ -1,5 +1,5 @@
-import 'package:flutter_core_base/core/errors/failure.dart';
-import 'package:flutter_core_base/l10n/app_localizations.dart';
+import 'package:flutter_sdk_base/core/errors/failure.dart';
+import 'package:flutter_sdk_base/l10n/app_localizations.dart';
 
 /// Turns a [Failure] into copy that can be shown to a person.
 ///

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_core_base/core/theme/app_motion.dart';
+import 'package:flutter_sdk_base/core/theme/app_motion.dart';
 
 import '../../support/widget_harness.dart';
 

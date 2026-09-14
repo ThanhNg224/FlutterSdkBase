@@ -10,7 +10,7 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get appName => 'Flutter Core Base';
+  String get appName => 'Flutter SDK Base';
 
   @override
   String get settingsTooltip => 'Cài đặt';

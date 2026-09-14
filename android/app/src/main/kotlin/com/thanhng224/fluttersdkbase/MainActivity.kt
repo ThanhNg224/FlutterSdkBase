@@ -1,4 +1,4 @@
-package com.thanhng224.fluttercorebase
+package com.thanhng224.fluttersdkbase
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_core_base/core/logging/log_record.dart';
+import 'package:flutter_sdk_base/core/logging/log_record.dart';
 
 /// Destination for records that passed the policy gate.
 abstract interface class LogSink {

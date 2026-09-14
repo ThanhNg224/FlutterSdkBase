@@ -1,8 +1,8 @@
-import 'package:flutter_core_base/core/config/app_config.dart';
-import 'package:flutter_core_base/core/config/app_config_controller.dart';
-import 'package:flutter_core_base/core/constants/storage_keys.dart';
-import 'package:flutter_core_base/core/storage/secure_storage_service.dart';
-import 'package:flutter_core_base/core/storage/storage_providers.dart';
+import 'package:flutter_sdk_base/core/config/app_config.dart';
+import 'package:flutter_sdk_base/core/config/app_config_controller.dart';
+import 'package:flutter_sdk_base/core/constants/storage_keys.dart';
+import 'package:flutter_sdk_base/core/storage/secure_storage_service.dart';
+import 'package:flutter_sdk_base/core/storage/storage_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

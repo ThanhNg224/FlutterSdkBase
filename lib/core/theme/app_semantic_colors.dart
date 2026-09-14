@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/theme/app_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_colors.dart';
 
 /// Brightness-aware semantic color tokens for cases that need raw [Color]
 /// (icons, borders, surfaces, status foregrounds).

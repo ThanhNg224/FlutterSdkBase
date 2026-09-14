@@ -1,6 +1,6 @@
-import 'package:flutter_core_base/core/errors/app_exception.dart';
-import 'package:flutter_core_base/core/errors/error_handler.dart';
-import 'package:flutter_core_base/core/errors/failure.dart';
+import 'package:flutter_sdk_base/core/errors/app_exception.dart';
+import 'package:flutter_sdk_base/core/errors/error_handler.dart';
+import 'package:flutter_sdk_base/core/errors/failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

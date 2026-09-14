@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/config/app_config.dart';
-import 'package:flutter_core_base/core/config/app_config_controller.dart';
-import 'package:flutter_core_base/core/errors/failure_l10n.dart';
-import 'package:flutter_core_base/core/extensions/context_extensions.dart';
-import 'package:flutter_core_base/core/localization/locale_provider.dart';
-import 'package:flutter_core_base/core/theme/app_semantic_colors.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
-import 'package:flutter_core_base/core/theme/theme_provider.dart';
-import 'package:flutter_core_base/core/utils/redaction.dart';
-import 'package:flutter_core_base/core/widgets/app_button.dart';
-import 'package:flutter_core_base/core/widgets/app_card.dart';
-import 'package:flutter_core_base/core/widgets/app_section_header.dart';
-import 'package:flutter_core_base/core/widgets/app_snackbar.dart';
-import 'package:flutter_core_base/core/widgets/app_text_field.dart';
-import 'package:flutter_core_base/core/widgets/async_value_widget.dart';
+import 'package:flutter_sdk_base/core/config/app_config.dart';
+import 'package:flutter_sdk_base/core/config/app_config_controller.dart';
+import 'package:flutter_sdk_base/core/errors/failure_l10n.dart';
+import 'package:flutter_sdk_base/core/extensions/context_extensions.dart';
+import 'package:flutter_sdk_base/core/localization/locale_provider.dart';
+import 'package:flutter_sdk_base/core/theme/app_semantic_colors.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/theme_provider.dart';
+import 'package:flutter_sdk_base/core/utils/redaction.dart';
+import 'package:flutter_sdk_base/core/widgets/app_button.dart';
+import 'package:flutter_sdk_base/core/widgets/app_card.dart';
+import 'package:flutter_sdk_base/core/widgets/app_section_header.dart';
+import 'package:flutter_sdk_base/core/widgets/app_snackbar.dart';
+import 'package:flutter_sdk_base/core/widgets/app_text_field.dart';
+import 'package:flutter_sdk_base/core/widgets/async_value_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SettingsScreen extends ConsumerWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/widgets/app_bottom_sheet.dart';
+import 'package:flutter_sdk_base/core/widgets/app_bottom_sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/widget_harness.dart';

@@ -95,7 +95,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Flutter Core Base'**
+  /// **'Flutter SDK Base'**
   String get appName;
 
   /// No description provided for @settingsTooltip.

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
-import 'package:flutter_core_base/core/widgets/app_button.dart';
-import 'package:flutter_core_base/core/widgets/app_card.dart';
-import 'package:flutter_core_base/core/widgets/app_section_header.dart';
-import 'package:flutter_core_base/core/widgets/app_text_field.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/widgets/app_button.dart';
+import 'package:flutter_sdk_base/core/widgets/app_card.dart';
+import 'package:flutter_sdk_base/core/widgets/app_section_header.dart';
+import 'package:flutter_sdk_base/core/widgets/app_text_field.dart';
 
 import '../support/widget_harness.dart';
 

@@ -1,4 +1,4 @@
-import 'package:flutter_core_base/core/utils/redaction.dart';
+import 'package:flutter_sdk_base/core/utils/redaction.dart';
 
 /// A wrapped value safe for logging with redaction applied.
 final class Redacted {

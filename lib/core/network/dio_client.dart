@@ -1,8 +1,8 @@
-import 'package:flutter_core_base/core/config/app_config_controller.dart';
+import 'package:flutter_sdk_base/core/config/app_config_controller.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_core_base/core/constants/app_constants.dart';
-import 'package:flutter_core_base/core/network/interceptors/auth_interceptor.dart';
-import 'package:flutter_core_base/core/network/interceptors/logging_interceptor.dart';
+import 'package:flutter_sdk_base/core/constants/app_constants.dart';
+import 'package:flutter_sdk_base/core/network/interceptors/auth_interceptor.dart';
+import 'package:flutter_sdk_base/core/network/interceptors/logging_interceptor.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dio_client.g.dart';

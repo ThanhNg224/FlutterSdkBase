@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/constants/storage_keys.dart';
-import 'package:flutter_core_base/core/storage/storage_providers.dart';
+import 'package:flutter_sdk_base/core/constants/storage_keys.dart';
+import 'package:flutter_sdk_base/core/storage/storage_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'theme_provider.g.dart';

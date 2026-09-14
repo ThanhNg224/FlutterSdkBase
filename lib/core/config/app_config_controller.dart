@@ -1,11 +1,11 @@
-import 'package:flutter_core_base/core/config/app_config.dart';
-import 'package:flutter_core_base/core/constants/api_endpoints.dart';
-import 'package:flutter_core_base/core/constants/storage_keys.dart';
-import 'package:flutter_core_base/core/errors/error_handler.dart';
-import 'package:flutter_core_base/core/errors/failure.dart';
-import 'package:flutter_core_base/core/storage/local_storage_service.dart';
-import 'package:flutter_core_base/core/storage/secure_storage_service.dart';
-import 'package:flutter_core_base/core/storage/storage_providers.dart';
+import 'package:flutter_sdk_base/core/config/app_config.dart';
+import 'package:flutter_sdk_base/core/constants/api_endpoints.dart';
+import 'package:flutter_sdk_base/core/constants/storage_keys.dart';
+import 'package:flutter_sdk_base/core/errors/error_handler.dart';
+import 'package:flutter_sdk_base/core/errors/failure.dart';
+import 'package:flutter_sdk_base/core/storage/local_storage_service.dart';
+import 'package:flutter_sdk_base/core/storage/secure_storage_service.dart';
+import 'package:flutter_sdk_base/core/storage/storage_providers.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

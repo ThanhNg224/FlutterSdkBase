@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_core_base/core/theme/app_spacing.dart';
+import 'package:flutter_sdk_base/core/theme/app_spacing.dart';
 
 /// Title above a group of cards with standardized typography and spacing.
 class AppSectionHeader extends StatelessWidget {

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Flutter Core Base" "\0"
-            VALUE "FileDescription", "Flutter Core Base Starter Application" "\0"
+            VALUE "CompanyName", "Flutter SDK Base" "\0"
+            VALUE "FileDescription", "Flutter SDK Base Application" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "flutter_core_base" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 Flutter Core Base. All rights reserved." "\0"
-            VALUE "OriginalFilename", "flutter_core_base.exe" "\0"
-            VALUE "ProductName", "Flutter Core Base" "\0"
+            VALUE "InternalName", "flutter_sdk_base" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Flutter SDK Base. All rights reserved." "\0"
+            VALUE "OriginalFilename", "flutter_sdk_base.exe" "\0"
+            VALUE "ProductName", "Flutter SDK Base" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
