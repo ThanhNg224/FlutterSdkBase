@@ -52,3 +52,15 @@ app.*.map.json
 
 macos/Flutter/ephemeral
 coverage/
+
+# The package has no root application runner. Flutter can regenerate these
+# ignored registrant files after dependency resolution; the generated example
+# owns the supported Android and iOS hosts instead.
+/android/
+/ios/
+/macos/
+/windows/
+/web/
+
+# Keep build output out of both the package and its generated example host.
+**/build/

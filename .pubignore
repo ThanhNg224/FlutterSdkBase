@@ -1,0 +1,12 @@
+docs/
+tool/
+.github/
+android/
+ios/
+macos/
+windows/
+web/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies

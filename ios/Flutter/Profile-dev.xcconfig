@@ -1,6 +1,0 @@
-#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
-#include "Generated.xcconfig"
-#include "Flavor.xcconfig"
-
-APP_FLAVOR=dev
-PRODUCT_BUNDLE_IDENTIFIER=com.thanhng224.fluttersdkbase.dev
