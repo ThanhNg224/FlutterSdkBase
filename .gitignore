@@ -5,17 +5,30 @@
 __pycache__/
 *.swp
 desktop.ini
+Thumbs.db
+ehthumbs.db
 .DS_Store
+._*
 .atom/
 .buildlog/
 .history
 .svn/
 
-# IntelliJ related
+# AI Agent tooling
+.superpowers/
+
+# Environment & Secrets
+*.env
+*.env.*
+!*.env.example
+
+# IDE / Editor related
 *.iml
 *.ipr
 *.iws
 .idea/
+.fleet/
+.zed/
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
@@ -32,6 +45,7 @@ desktop.ini
 .pub-cache/
 .pub/
 /build/
+/pubspec.lock
 
 # Web related
 
