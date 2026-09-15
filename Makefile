@@ -5,12 +5,18 @@ DART ?= dart
 
 .DEFAULT_GOAL := help
 
-.PHONY: help pub-get format format-check analyze test doc pana verify boundary publish-check ci rename
+.PHONY: help pub-get format format-check analyze test doc pana verify boundary publish-check ci rename clean
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+clean: ## Remove build artifacts and temporary files
+	$(FLUTTER) clean
+	@rm -rf build doc/api .dart_tool
+	@if [ -d "example" ]; then cd example && $(FLUTTER) clean && rm -rf build .dart_tool; fi
+
 pub-get: ## Resolve package dependencies
+
 	$(FLUTTER) pub get
 
 rename: ## Rename the package everywhere; requires NAME=my_company_sdk
@@ -27,7 +33,7 @@ analyze: ## Run static analysis with infos treated as errors
 	$(FLUTTER) analyze --fatal-infos
 
 test: ## Run the package test suite
-	$(FLUTTER) test
+	$(FLUTTER) test -j 8
 
 doc: ## Generate API documentation and fail on unresolved links
 	$(DART) doc --validate-links
