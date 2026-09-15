@@ -41,18 +41,29 @@ Future<void> main(List<String> arguments) async {
     );
   }
 
-  final List<String> files = _trackedTextFiles();
-  final List<String> rewritten = <String>[];
+  // Build every change in memory first so the post-conditions below can reject
+  // the whole rename before a single file is touched.
+  final Map<String, String> pending = <String, String>{};
 
-  for (final String path in files) {
-    final File file = File(path);
-    final String original = file.readAsStringSync();
+  for (final String path in _trackedTextFiles()) {
+    final String original = File(path).readAsStringSync();
     if (!original.contains(currentName)) {
       continue;
     }
-    rewritten.add(path);
-    if (!isDryRun) {
-      file.writeAsStringSync(original.replaceAll(currentName, newName));
+    final String updated = path.endsWith('pubspec.yaml')
+        ? _rewritePubspec(original, currentName, newName)
+        : _rewriteText(original, currentName, newName);
+    if (updated != original) {
+      pending[path] = updated;
+    }
+  }
+
+  _checkPostConditions(pending, currentName, newName);
+
+  final List<String> rewritten = pending.keys.toList()..sort();
+  if (!isDryRun) {
+    for (final MapEntry<String, String> entry in pending.entries) {
+      File(entry.key).writeAsStringSync(entry.value);
     }
   }
 
@@ -89,6 +100,69 @@ Future<void> main(List<String> arguments) async {
     '\nNext: run `make verify`, then `cd example && flutter pub get`.\n'
     'The checkout directory and the git remote are unchanged — rename those yourself.',
   );
+}
+
+/// Rewrites ordinary text.
+///
+/// The derived names go first, because the general rule below refuses to match
+/// a name that is glued to an identifier character — which is exactly what
+/// `_testing` and `_example` are.
+///
+/// The general rule then replaces the name only where it stands alone as a
+/// token. Without that boundary, renaming a package called `sdk` would rewrite
+/// `sdk_client.dart` inside every import while leaving the file on disk
+/// untouched, and would corrupt `NAME=my_company_sdk` in the Makefile.
+String _rewriteText(String content, String current, String next) {
+  final String withDerived = content
+      .replaceAll('${current}_testing', '${next}_testing')
+      .replaceAll('${current}_example', '${next}_example');
+  final RegExp standalone = RegExp('(?<![A-Za-z0-9_])${RegExp.escape(current)}(?![A-Za-z0-9_])');
+  return withDerived.replaceAll(standalone, next);
+}
+
+/// Rewrites a pubspec by whole lines rather than by substring.
+///
+/// A pubspec's structure is made of keys the package does not own. A package
+/// named `sdk` would otherwise turn `environment:\n  sdk:` into `  <new>:` and
+/// `dependencies:\n  flutter:\n    sdk: flutter` into `    <new>: flutter`,
+/// destroying the Dart SDK constraint and the Flutter dependency source.
+String _rewritePubspec(String content, String current, String next) {
+  final List<String> lines = content.split('\n');
+  for (int i = 0; i < lines.length; i++) {
+    final String line = lines[i];
+    if (line == 'name: $current') {
+      lines[i] = 'name: $next';
+    } else if (line == 'name: ${current}_example') {
+      lines[i] = 'name: ${next}_example';
+    } else if (line == '  $current:') {
+      lines[i] = '  $next:';
+    }
+  }
+  return lines.join('\n');
+}
+
+/// Refuses the rename if the result would not be a working package.
+///
+/// These are cheap assertions against the failure modes a substring rewrite
+/// actually produces, checked before anything is written.
+void _checkPostConditions(Map<String, String> pending, String current, String next) {
+  final String? pubspec = pending['pubspec.yaml'];
+  if (pubspec != null) {
+    if (!pubspec.contains('name: $next')) {
+      _fail('Post-condition failed: pubspec.yaml would not declare name: $next.');
+    }
+    if (!pubspec.contains('\n  sdk: ')) {
+      _fail('Post-condition failed: the Dart SDK constraint in pubspec.yaml would be damaged.');
+    }
+    if (!pubspec.contains('    sdk: flutter')) {
+      _fail('Post-condition failed: the Flutter dependency source in pubspec.yaml would be damaged.');
+    }
+  }
+  for (final MapEntry<String, String> entry in pending.entries) {
+    if (entry.value.contains('package:$current/')) {
+      _fail('Post-condition failed: ${entry.key} would still import package:$current/.');
+    }
+  }
 }
 
 String _readCurrentName() {
@@ -190,6 +264,36 @@ void _validate(String newName, String currentName) {
   if (reserved.contains(newName)) {
     _fail('"$newName" is a Dart reserved word and cannot be a library name.');
   }
+  // A package cannot share a name with something it depends on: the import
+  // `package:<name>/...` would become ambiguous and pub could not resolve it.
+  final Set<String> dependencies = _declaredDependencies()..addAll(<String>{'dart', 'flutter'});
+  if (dependencies.contains(newName)) {
+    _fail(
+      '"$newName" is already the name of a dependency of this package.\n'
+      'Sharing the name would make package:$newName/... ambiguous. Pick another.',
+    );
+  }
+}
+
+/// Every package name this pubspec depends on, so a rename cannot collide.
+Set<String> _declaredDependencies() {
+  final Set<String> names = <String>{};
+  bool inDependencies = false;
+  for (final String line in File('pubspec.yaml').readAsLinesSync()) {
+    if (line.startsWith('dependencies:') || line.startsWith('dev_dependencies:')) {
+      inDependencies = true;
+      continue;
+    }
+    if (line.isNotEmpty && !line.startsWith(' ')) {
+      inDependencies = false;
+      continue;
+    }
+    final RegExpMatch? match = RegExp(r'^  ([a-z][a-z0-9_]*):').firstMatch(line);
+    if (inDependencies && match != null) {
+      names.add(match.group(1)!);
+    }
+  }
+  return names;
 }
 
 bool _hasUncommittedChanges() {
