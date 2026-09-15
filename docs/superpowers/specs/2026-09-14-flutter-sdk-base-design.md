@@ -407,7 +407,7 @@ The migration replaces application gates with package gates:
 4. A repository check fails if `example/` imports `package:flutter_sdk_base/src/` or uses a relative import into package source.
 5. `flutter pub publish --dry-run` reports `Package has 0 warnings.`, and the package declares no `publish_to: none` that would disable it. Reaching zero requires a root `.pubignore` excluding `docs/` and a Flutter constraint with no upper bound; both are deliberate, not concessions. The workflow never runs a publish command without `--dry-run`.
 6. CI packs the publishable archive, extracts it to a temporary directory, and resolves `example/` against **that extraction** instead of the working tree. This proves the example builds from only the files that would actually ship. Combined with gates 3 and 4 it replaces the heavier temporary-Git-dependency scheme: the archive proves file completeness, the lint and grep prove the example never reaches into `lib/src/`.
-7. CI builds the example Android host at `minSdk 24`; a macOS CI job builds the iOS host at deployment target 15.0. Both jobs pin the declared Flutter floor. If a future Flutter floor changes either derived number, this gate is what catches it.
+7. CI builds the example Android host at `minSdk 24`; a macOS CI job builds the iOS host at deployment target 15.0. Both host jobs run for the declared Flutter floor and latest stable through the matrix. If a future Flutter floor changes either derived number, this gate is what catches it.
 8. CI checks the declared Flutter floor (`3.47.0`) and latest stable through a
    matrix. A support floor that is never compiled is not a compatibility
    commitment.
