@@ -3,7 +3,7 @@ import 'package:flutter_sdk_base/src/errors/sdk_failure.dart';
 
 /// Maps a non-success HTTP status onto the single failure table defined by the
 /// design spec, so no call site decides `code` or `isRetryable` on its own.
-SdkFailure failureForStatus(int statusCode, {String? message}) {
+SdkFailure failureForStatus(int statusCode, {required String requestId, String? message}) {
   final (String code, bool isRetryable, String defaultMessage) = switch (statusCode) {
     401 || 403 => (
       SdkErrorCodes.unauthorized,
@@ -32,5 +32,6 @@ SdkFailure failureForStatus(int statusCode, {String? message}) {
     message: message ?? defaultMessage,
     isRetryable: isRetryable,
     statusCode: statusCode,
+    requestId: requestId,
   );
 }

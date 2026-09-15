@@ -10,6 +10,7 @@
 - Task 9: `http.ClientException` is non-const in the resolved `package:http`; removed the invalid `const` from the plan's test fixture without changing the transport-error assertion.
 - Task 10: replaced the plan's secret-shaped test API key with a neutral `key` fixture; the repository secret scanner correctly blocks credential-shaped documentation assignments even when they are not credentials.
 - Task 11: `flutter pub get` added example analyzer exclusions for generated `build/`, `android/`, and `ios/`; retained because the Flutter tool requires them to keep generated platform files out of analysis.
+- Task 1: Replaced the pre-existing credential-shaped executor-test fixture with the neutral `test-api-key-1234` value when staging that modified test; the redaction assertion and behavior are unchanged.
 2026-09-14 Task 13: removed named app-era framework references from the replacement docs so the plan's stale-document grep passes; the architecture rule remains that host state-management concerns stay outside `lib/src/`.
 - Task 13: sanitized secret-shaped API-key examples in the plan to the neutral `key` fixture; the repository secret scanner rejects credential-shaped documentation fixtures even though they are not credentials.
 - Acceptance review: `SdkRequestExecutor.close()` skipped `_transport.close()` whenever any `SdkHttpCall.cancel()` threw, leaking a host-injected transport. `Future.wait` is now wrapped in try/finally; the cancellation error is still rethrown rather than swallowed. Covered by a transport whose cancel fails.

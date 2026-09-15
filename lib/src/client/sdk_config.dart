@@ -21,4 +21,14 @@ final class SdkConfig {
   /// How long a single operation may run before it fails with
   /// `SdkErrorCodes.timeout`.
   final Duration requestTimeout;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SdkConfig &&
+      other.baseUri == baseUri &&
+      other.apiKey == apiKey &&
+      other.requestTimeout == requestTimeout;
+
+  @override
+  int get hashCode => Object.hash(baseUri, apiKey, requestTimeout);
 }

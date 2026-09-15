@@ -20,4 +20,32 @@ void main() {
 
     expect(config.requestTimeout, const Duration(seconds: 3));
   });
+
+  test('SdkConfig equality covers all fields', () {
+    final first = SdkConfig(
+      baseUri: Uri.parse('https://api.example.com'),
+      apiKey: 'key',
+      requestTimeout: Duration(seconds: 3),
+    );
+    final same = SdkConfig(
+      baseUri: Uri.parse('https://api.example.com'),
+      apiKey: 'key',
+      requestTimeout: Duration(seconds: 3),
+    );
+
+    expect(first, same);
+    expect(first.hashCode, same.hashCode);
+    expect(
+      first,
+      isNot(
+        equals(
+          SdkConfig(
+            baseUri: Uri.parse('https://api.example.com'),
+            apiKey: 'other-key',
+            requestTimeout: Duration(seconds: 3),
+          ),
+        ),
+      ),
+    );
+  });
 }

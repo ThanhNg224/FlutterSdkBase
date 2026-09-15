@@ -6,6 +6,7 @@
 library;
 
 export 'src/client/sdk_client.dart' show SdkClient;
+export 'src/client/sdk_cancel_token.dart' show SdkCancelToken;
 export 'src/client/sdk_config.dart' show SdkConfig;
 export 'src/errors/sdk_error_codes.dart' show SdkErrorCodes;
 export 'src/errors/sdk_exception.dart' show SdkException;
@@ -18,3 +19,4 @@ export 'src/transport/sdk_http_call.dart' show SdkHttpCall;
 export 'src/transport/sdk_http_request.dart' show SdkHttpRequest;
 export 'src/transport/sdk_http_response.dart' show SdkHttpResponse;
 export 'src/transport/sdk_http_transport.dart' show SdkHttpTransport;
+export 'src/version/sdk_version.dart' show sdkVersion;

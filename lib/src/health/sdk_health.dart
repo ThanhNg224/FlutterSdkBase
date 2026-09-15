@@ -15,4 +15,11 @@ final class SdkHealth {
 
   /// When the SDK observed the response.
   final DateTime checkedAt;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SdkHealth && other.isHealthy == isHealthy && other.status == status && other.checkedAt == checkedAt;
+
+  @override
+  int get hashCode => Object.hash(isHealthy, status, checkedAt);
 }

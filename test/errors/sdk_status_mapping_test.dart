@@ -6,7 +6,7 @@ void main() {
   group('failureForStatus', () {
     test('401 and 403 map to unauthorized and are not retryable', () {
       for (final status in <int>[401, 403]) {
-        final failure = failureForStatus(status);
+        final failure = failureForStatus(status, requestId: 'request-id');
         expect(failure.code, SdkErrorCodes.unauthorized, reason: 'status $status');
         expect(failure.isRetryable, isFalse, reason: 'status $status');
         expect(failure.statusCode, status);
@@ -14,14 +14,14 @@ void main() {
     });
 
     test('429 maps to rateLimited and is retryable', () {
-      final failure = failureForStatus(429);
+      final failure = failureForStatus(429, requestId: 'request-id');
       expect(failure.code, SdkErrorCodes.rateLimited);
       expect(failure.isRetryable, isTrue);
     });
 
     test('other 4xx map to client and are not retryable', () {
       for (final status in <int>[400, 404, 409, 422]) {
-        final failure = failureForStatus(status);
+        final failure = failureForStatus(status, requestId: 'request-id');
         expect(failure.code, SdkErrorCodes.client, reason: 'status $status');
         expect(failure.isRetryable, isFalse, reason: 'status $status');
       }
@@ -29,14 +29,14 @@ void main() {
 
     test('5xx map to server and are retryable', () {
       for (final status in <int>[500, 502, 503]) {
-        final failure = failureForStatus(status);
+        final failure = failureForStatus(status, requestId: 'request-id');
         expect(failure.code, SdkErrorCodes.server, reason: 'status $status');
         expect(failure.isRetryable, isTrue, reason: 'status $status');
       }
     });
 
     test('a supplied message replaces the default', () {
-      final failure = failureForStatus(404, message: 'No such dataset.');
+      final failure = failureForStatus(404, requestId: 'request-id', message: 'No such dataset.');
       expect(failure.message, 'No such dataset.');
     });
   });
