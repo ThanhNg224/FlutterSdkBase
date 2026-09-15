@@ -69,6 +69,10 @@ The package declares these floors:
 | iOS host | iOS 15.0 or higher |
 | Supported release platforms | Android and iOS |
 
+The root `pubspec.yaml` declares exactly `android` and `ios` under `platforms:`.
+This keeps pub.dev's platform metadata aligned with the Android/iOS support
+commitment; web and desktop remain unsupported release targets.
+
 The Flutter constraint deliberately carries **no upper bound**. Pub deprecates upper bounds on the Flutter SDK constraint (`dart.dev/go/flutter-upper-bound-deprecation`) and `pub publish` warns on one; a `<4.0.0` here would also lock hosts out of a future major for no demonstrated incompatibility. The Dart constraint keeps its `<4.0.0` — that form is conventional and draws no warning.
 
 `docs/` holds this specification, the implementation plan, and internal engineering notes. None of it belongs in the published archive, so a root `.pubignore` containing `docs/` excludes it. This is not a workaround for pub's "rename `docs` to `doc`" warning: the directory is genuinely internal, and excluding it also keeps the archive small. Verified empirically — with `.pubignore` in place and no Flutter upper bound, `flutter pub publish --dry-run` reports `Package has 0 warnings.`
