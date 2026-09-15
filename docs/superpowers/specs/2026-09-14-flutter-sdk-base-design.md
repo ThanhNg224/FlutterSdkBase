@@ -418,6 +418,13 @@ The migration replaces application gates with package gates:
     enforces a documented coverage threshold or omits `--coverage`; v1 omits
     the unused artifact rather than presenting it as a gate.
 
+Pana remains a global CI tool rather than a package dependency. The package
+gate installs it with `dart pub global activate pana` and runs
+`dart pub global run pana . --exit-code-threshold 0`; the zero-deficit
+threshold does not accept a lower score. The generated API documentation gate
+runs immediately before Pana so documentation and package-quality regressions
+are checked together before the publish dry-run.
+
 `README.md` describes installation, minimal usage, error handling, lifecycle, support matrix, and the testing barrel. `CHANGELOG.md`, `LICENSE`, public API docs, and compatibility policy are release requirements, not deferred polish.
 
 ## 11. Implementation Order
