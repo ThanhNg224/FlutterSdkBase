@@ -5,7 +5,7 @@ DART ?= dart
 
 .DEFAULT_GOAL := help
 
-.PHONY: help pub-get format format-check analyze test doc verify boundary publish-check ci rename
+.PHONY: help pub-get format format-check analyze test doc pana verify boundary publish-check ci rename
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -32,6 +32,10 @@ test: ## Run the package test suite
 doc: ## Generate API documentation and fail on unresolved links
 	$(DART) doc --validate-links
 
+pana: ## Run Pana with no missing package-quality points
+	$(DART) pub global activate pana
+	$(DART) pub global run pana . --exit-code-threshold 0
+
 boundary: ## Fail if lib/src reaches into Flutter UI or dart:io
 	@! grep -rn "package:flutter/material.dart\|package:flutter/widgets.dart\|package:flutter/services.dart\|dart:io" lib/ \
 	  || (echo "BOUNDARY VIOLATION in lib/"; exit 1)
@@ -42,4 +46,4 @@ publish-check: ## Verify the package would publish cleanly
 
 verify: format-check analyze boundary test ## Local pre-commit gate
 
-ci: pub-get verify publish-check ## CI-equivalent local gate
+ci: pub-get verify doc pana publish-check ## CI-equivalent local gate
