@@ -22,6 +22,7 @@ jobs:
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze --fatal-infos
+      - run: dart doc --validate-links
       - run: dart pub global activate pana
       - run: dart pub global run pana . --exit-code-threshold 0
       - run: ./tool/check_boundaries.sh

@@ -42,12 +42,16 @@
 
 - `make verify` — format, analyze, boundary, test.
 - `make ci` — the above plus `pub get` and the publish dry-run.
+- `make doc` — generate API documentation with link validation and fail on
+  unresolved links.
 - `./tool/check_boundaries.sh` — layering rules.
 
 ## Release quality
 
 - CI installs Pana as a global tool with `dart pub global activate pana` and
   runs `dart pub global run pana . --exit-code-threshold 0`.
+- CI runs `dart doc --validate-links` before Pana so unresolved API
+  documentation links fail before the package-quality gate and publish dry-run.
 - The zero-deficit threshold is intentional: documentation, dependency, and
   platform metadata regressions must be fixed before publication rather than
   accepted as a lower package score. Pana is a CI tool, not a package
