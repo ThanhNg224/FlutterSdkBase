@@ -5,13 +5,17 @@ DART ?= dart
 
 .DEFAULT_GOAL := help
 
-.PHONY: help pub-get format format-check analyze test verify boundary publish-check ci
+.PHONY: help pub-get format format-check analyze test verify boundary publish-check ci rename
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 pub-get: ## Resolve package dependencies
 	$(FLUTTER) pub get
+
+rename: ## Rename the package everywhere; requires NAME=my_company_sdk
+	@test -n "$(NAME)" || (echo "NAME is required, e.g. make rename NAME=my_company_sdk"; exit 2)
+	$(DART) run tool/rename_package.dart $(NAME)
 
 format: ## Format all Dart files
 	$(DART) format .

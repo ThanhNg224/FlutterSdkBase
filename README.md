@@ -9,6 +9,23 @@ dependencies:
   flutter_sdk_base: ^0.1.0
 ```
 
+## Using this as a base
+
+This repository is a template. Give the package your own name before writing any
+code — the name appears in `pubspec.yaml`, both barrel filenames, every
+`package:` import across `lib/`, `test/` and `example/`, the boundary script and
+the documentation.
+
+```sh
+make rename NAME=my_company_sdk
+make verify
+```
+
+Preview without writing anything with `dart run tool/rename_package.dart my_company_sdk --dry-run`.
+The tool refuses to run on a dirty working tree so the rename lands as one
+reviewable commit. It does not rename the checkout directory or change the git
+remote — do those yourself.
+
 ## Support matrix
 
 | Surface | Supported |
