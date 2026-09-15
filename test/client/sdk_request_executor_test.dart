@@ -9,11 +9,12 @@ import 'package:flutter_sdk_base/src/transport/sdk_http_call.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_request.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_response.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_transport.dart';
+import 'package:flutter_sdk_base/flutter_sdk_base.dart' show sdkVersion;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/recording_sdk_logger.dart';
 
-const String _apiKey = 'sk_live_5f2b9c7e4a1d';
+const String _apiKey = 'test-api-key-1234';
 
 SdkConfig _config({Duration timeout = const Duration(seconds: 15)}) => SdkConfig(
   baseUri: Uri.parse('https://api.example.com'),
@@ -21,10 +22,10 @@ SdkConfig _config({Duration timeout = const Duration(seconds: 15)}) => SdkConfig
   requestTimeout: timeout,
 );
 
-SdkHttpRequest _request() => SdkHttpRequest(
+SdkHttpRequest _request({Map<String, String>? headers}) => SdkHttpRequest(
   method: 'GET',
   uri: Uri.parse('https://api.example.com/health'),
-  headers: const <String, String>{},
+  headers: headers ?? <String, String>{},
 );
 
 void main() {
@@ -35,7 +36,7 @@ void main() {
 
       final response = await executor.send(_request());
 
-      expect(response.statusCode, 200);
+      expect(response.response.statusCode, 200);
     });
 
     test('authHeaders carries the api key and a JSON accept header', () {
@@ -58,6 +59,7 @@ void main() {
       expect(error.failure.code, SdkErrorCodes.transport);
       expect(error.failure.isRetryable, isTrue);
       expect(error.failure.cause, isNotNull);
+      expect(error.failure.requestId, transport.requests.single.headers['X-Request-Id']);
     });
 
     test('fails with timeout and cancels the call when the deadline passes', () async {
@@ -72,6 +74,7 @@ void main() {
 
       expect(error.failure.code, SdkErrorCodes.timeout);
       expect(error.failure.isRetryable, isTrue);
+      expect(error.failure.requestId, transport.requests.single.headers['X-Request-Id']);
       expect(transport.hasPendingCancellation, isTrue);
     });
 
@@ -86,7 +89,21 @@ void main() {
       final SdkException error = await pending;
       expect(error.failure.code, SdkErrorCodes.cancelled);
       expect(error.failure.isRetryable, isFalse);
+      expect(error.failure.requestId, transport.requests.single.headers['X-Request-Id']);
       expect(transport.isClosed, isTrue);
+    });
+
+    test('adds version and request ID without mutating host headers', () async {
+      final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
+      final Map<String, String> headers = <String, String>{'X-Host': 'value'};
+      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
+
+      await executor.send(_request(headers: headers));
+
+      expect(headers, <String, String>{'X-Host': 'value'});
+      final SdkHttpRequest sent = transport.requests.single;
+      expect(sent.headers['X-Sdk-Version'], sdkVersion);
+      expect(sent.headers['X-Request-Id'], matches(RegExp(r'^[0-9a-f]{32}$')));
     });
 
     test('close is idempotent', () async {
@@ -153,7 +170,7 @@ void main() {
         await _captureSdkException(() => transportFailure.send(_request()));
 
         expect(logger.combined, isNot(contains(_apiKey)));
-        expect(logger.combined, contains('sk_l…4a1d'));
+        expect(logger.combined, contains('test…1234'));
       },
     );
 

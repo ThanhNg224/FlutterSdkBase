@@ -9,8 +9,9 @@ final class SdkFailure {
     required this.message,
     required this.isRetryable,
     this.statusCode,
+    required this.requestId,
     this.cause,
-  });
+  }) : assert(requestId != '', 'requestId must not be empty');
 
   /// A stable identifier drawn from `SdkErrorCodes`.
   final String code;
@@ -26,11 +27,26 @@ final class SdkFailure {
   /// The HTTP status that produced this failure, when there was one.
   final int? statusCode;
 
+  /// The non-empty correlation ID assigned to the request.
+  final String requestId;
+
   /// The underlying error, for diagnostics only.
   ///
   /// Its type and contents carry no compatibility guarantee. Never branch on
   /// it, and never render it to an end user.
   final Object? cause;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SdkFailure &&
+      other.code == code &&
+      other.message == message &&
+      other.isRetryable == isRetryable &&
+      other.statusCode == statusCode &&
+      other.requestId == requestId;
+
+  @override
+  int get hashCode => Object.hash(code, message, isRetryable, statusCode, requestId);
 
   @override
   String toString() => 'SdkFailure($code, status: $statusCode): $message';

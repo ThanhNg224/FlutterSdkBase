@@ -7,6 +7,13 @@
 - Barrels export with `show`, never bare.
 - Public signatures never mention transport-library, functional-programming, or
   code-generation implementation types.
+- `SdkCancelToken` is the only public cancellation contract; cancellation is
+  best-effort and never closes the client. `sdkVersion` is sent in
+  `X-Sdk-Version`, and every request gets a lowercase hexadecimal
+  `X-Request-Id`.
+- `SdkConfig`, `SdkHealth`, and `SdkFailure` implement value equality. Failure
+  equality excludes diagnostic `cause`, and `SdkFailure.toString()` never
+  renders it.
 
 ## Errors
 
@@ -28,6 +35,8 @@
 - Drive the SDK through `FakeSdkHttpTransport`, not a live server.
 - Test `package:http` wiring with `MockClient` from `package:http/testing.dart`.
 - Freeze time through the `SdkClock` seam rather than asserting on ranges.
+- Assert request IDs are propagated from captured headers to every failure path,
+  and assert the version header matches `sdkVersion` and `pubspec.yaml`.
 
 ## Commands
 

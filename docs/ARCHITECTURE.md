@@ -27,6 +27,7 @@ SdkClient ──► SdkRequestExecutor ──► SdkHttpTransport ──► (pac
                     │
                     ├── authHeaders()      apiKey, redacted in every log
                     ├── timeout + cancel   best-effort
+                    ├── cancellation + correlation headers
                     └── failureForStatus() the single error table
 ```
 
@@ -36,6 +37,13 @@ SdkClient ──► SdkRequestExecutor ──► SdkHttpTransport ──► (pac
 2. Give the service an `@internal` constructor taking the executor and config.
 3. Build the request with `SdkUri.join` and `executor.authHeaders()`.
 4. Map non-2xx through `failureForStatus`; map unparseable 2xx to
-   `SdkErrorCodes.invalidResponse`.
+   `SdkErrorCodes.invalidResponse`. The executor supplies the request ID to
+   every failure path.
 5. Expose it from `SdkClient` and export it from the barrel with `show`.
 6. Add the error codes it introduces to `SdkErrorCodes` and `CHANGELOG.md`.
+
+Per-operation cancellation is SDK-owned through `SdkCancelToken`. It is
+best-effort and never closes the client; reusing one token deliberately groups
+operations. The executor adds `X-Sdk-Version` and a fresh `X-Request-Id` to
+every outgoing request, and capabilities retain that ID when mapping response
+or parsing failures.

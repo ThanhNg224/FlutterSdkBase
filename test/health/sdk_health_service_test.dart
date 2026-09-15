@@ -4,6 +4,7 @@ import 'package:flutter_sdk_base/src/errors/sdk_error_codes.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_exception.dart';
 import 'package:flutter_sdk_base/src/health/sdk_health.dart';
 import 'package:flutter_sdk_base/src/health/sdk_health_service.dart';
+import 'package:flutter_sdk_base/flutter_sdk_base.dart' show sdkVersion;
 import 'package:flutter_sdk_base/src/transport/fake_sdk_http_transport.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -54,6 +55,34 @@ void main() {
       expect(health.status, 'degraded');
     });
 
+    test('SdkHealth equality covers all fields', () {
+      final first = SdkHealth(
+        isHealthy: true,
+        status: 'ok',
+        checkedAt: _frozenNow,
+      );
+      final same = SdkHealth(
+        isHealthy: true,
+        status: 'ok',
+        checkedAt: _frozenNow,
+      );
+
+      expect(first, same);
+      expect(first.hashCode, same.hashCode);
+      expect(
+        first,
+        isNot(
+          equals(
+            SdkHealth(
+              isHealthy: false,
+              status: 'ok',
+              checkedAt: _frozenNow,
+            ),
+          ),
+        ),
+      );
+    });
+
     test('requests GET /health under the configured base path with auth', () async {
       final subject = _subject(baseUri: Uri.parse('https://api.example.com/v1'))
         ..transport.enqueueJson('{"status":"ok"}');
@@ -64,6 +93,22 @@ void main() {
       expect(request.method, 'GET');
       expect(request.uri.toString(), 'https://api.example.com/v1/health');
       expect(request.headers['X-Api-Key'], _testApiKey);
+      expect(request.headers['X-Sdk-Version'], sdkVersion);
+      expect(request.headers['X-Request-Id'], matches(RegExp(r'^[0-9a-f]{32}$')));
+    });
+
+    test('assigns distinct request IDs to distinct operations', () async {
+      final subject = _subject()
+        ..transport.enqueueJson('{"status":"ok"}')
+        ..transport.enqueueJson('{"status":"ok"}');
+
+      await Future.wait(<Future<SdkHealth>>[
+        subject.service.check(),
+        subject.service.check(),
+      ]);
+
+      final List<String?> ids = subject.transport.requests.map((request) => request.headers['X-Request-Id']).toList();
+      expect(ids[0], isNot(ids[1]));
     });
 
     test('maps 401 to unauthorized', () async {
@@ -74,6 +119,7 @@ void main() {
       expect(error.failure.code, SdkErrorCodes.unauthorized);
       expect(error.failure.statusCode, 401);
       expect(error.failure.isRetryable, isFalse);
+      expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
     });
 
     test('maps 404 to client', () async {
@@ -82,6 +128,7 @@ void main() {
       final SdkException error = await _captureSdkException(subject.service.check);
 
       expect(error.failure.code, SdkErrorCodes.client);
+      expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
     });
 
     test('maps 503 to a retryable server failure', () async {
@@ -91,6 +138,7 @@ void main() {
 
       expect(error.failure.code, SdkErrorCodes.server);
       expect(error.failure.isRetryable, isTrue);
+      expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
     });
 
     test('maps a 2xx body that is not JSON to invalidResponse', () async {
@@ -100,6 +148,7 @@ void main() {
 
       expect(error.failure.code, SdkErrorCodes.invalidResponse);
       expect(error.failure.isRetryable, isFalse);
+      expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
     });
 
     test('maps a 2xx JSON body without a status field to invalidResponse', () async {
@@ -108,6 +157,7 @@ void main() {
       final SdkException error = await _captureSdkException(subject.service.check);
 
       expect(error.failure.code, SdkErrorCodes.invalidResponse);
+      expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
     });
   });
 }

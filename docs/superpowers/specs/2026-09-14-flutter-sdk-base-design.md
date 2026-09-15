@@ -12,6 +12,9 @@
 6. `example/` is generated fresh, never migrated, and owns the `implementation_imports` lint (§8, §9, §10).
 7. The artifact-consumer gate uses an extracted archive instead of a temporary Git dependency (§10).
 8. `SdkHealth.checkedAt` gained an internal clock seam so the fake transport is genuinely deterministic (§4).
+9. Operations may be cancelled independently through an SDK-owned `SdkCancelToken`; cancellation remains best-effort and does not close the client (§4, §6).
+10. Every request carries stable SDK-version and per-request correlation headers; failures retain the request ID for host support workflows (§5, §6).
+11. The public value types define equality now, before hosts depend on field-by-field assertions (§4, §5).
 
 **Goal:** Transform Flutter Core Base into a publishable Flutter SDK template that demonstrates a small, clean HTTP capability while remaining independent of host navigation, UI, state management, persistence, and native code.
 
@@ -94,8 +97,11 @@ lib/
 └── src/
     ├── client/
     │   ├── sdk_client.dart
+    │   ├── sdk_cancel_token.dart
     │   ├── sdk_config.dart
     │   └── sdk_request_executor.dart
+    ├── version/
+    │   └── sdk_version.dart
     ├── health/
     │   ├── sdk_health.dart
     │   └── sdk_health_service.dart
@@ -123,7 +129,7 @@ test/
 docs/
 ```
 
-`flutter_sdk_base.dart` exports `SdkClient`, `SdkConfig`, `SdkHealthService`, `SdkHealth`, `SdkHttpTransport`, `SdkHttpCall`, `SdkHttpRequest`, `SdkHttpResponse`, `SdkLogger`, `SdkLogLevel`, `SdkFailure`, `SdkException`, and `SdkErrorCodes`. The testing barrel exports `FakeSdkHttpTransport` only. Its deterministic behaviour is configured through that class's own methods; no separate handler type is exported.
+`flutter_sdk_base.dart` exports `SdkClient`, `SdkCancelToken`, `SdkConfig`, `SdkHealthService`, `SdkHealth`, `SdkHttpTransport`, `SdkHttpCall`, `SdkHttpRequest`, `SdkHttpResponse`, `SdkLogger`, `SdkLogLevel`, `SdkFailure`, `SdkException`, `SdkErrorCodes`, and the `sdkVersion` constant. The testing barrel exports `FakeSdkHttpTransport` only. Its deterministic behaviour is configured through that class's own methods; no separate handler type is exported.
 
 `lib/src/` may import `package:flutter/foundation.dart` for `kDebugMode`, `debugPrint`, and `@visibleForTesting`. It must not import `package:flutter/material.dart`, `package:flutter/widgets.dart`, or `package:flutter/services.dart`.
 
@@ -156,8 +162,21 @@ final class SdkConfig {
   final Duration requestTimeout;
 }
 
+/// The package version sent in `X-Sdk-Version` on every request.
+const String sdkVersion = '0.1.0';
+
+final class SdkCancelToken {
+  /// Cancels operations using this token. Idempotent.
+  void cancel();
+
+  /// Whether [cancel] has been called.
+  bool get isCancelled;
+}
+
 final class SdkHealthService {
-  Future<SdkHealth> check();
+  /// Cancellation is best-effort: it stops the SDK waiting but cannot prove
+  /// that the server did not receive the request.
+  Future<SdkHealth> check({SdkCancelToken? cancelToken});
 }
 
 final class SdkHealth {
@@ -172,6 +191,24 @@ final class SdkHealth {
   final DateTime checkedAt;
 }
 ```
+
+`sdkVersion` is required to match the root `pubspec.yaml` version exactly; a
+package test reads that declaration so the wire header cannot drift from the
+published package metadata.
+
+`SdkCancelToken` is SDK-owned; it does not expose a transport-library type. A
+host normally creates one token per operation. Reusing one token deliberately
+groups those operations: cancelling it cancels every in-flight operation that
+uses it. Cancelling before an operation starts produces the same
+`SdkErrorCodes.cancelled` failure without opening a transport call. Cancelling
+an operation never closes the `SdkClient`, so independent operations and later
+requests remain usable.
+
+`SdkConfig`, `SdkHealth`, and `SdkFailure` are value types. Their `==` and
+`hashCode` cover their stable public fields. `SdkFailure.cause` is explicitly
+excluded because it is diagnostic-only and has no compatibility guarantee.
+For `SdkFailure`, those stable fields are `code`, `message`, `isRetryable`,
+`statusCode`, and `requestId`.
 
 `SdkHealth.checkedAt` is the moment the SDK observed the response. The clock is an internal seam (`DateTime Function()`) injected through an `@internal`-annotated constructor so package tests can freeze it. `SdkClient`'s public constructor exposes no clock parameter, and the analyzer flags any host that reaches for the internal one.
 
@@ -188,6 +225,7 @@ final class SdkFailure {
     required this.message,
     required this.isRetryable,
     this.statusCode,
+    required this.requestId,
     this.cause,
   });
 
@@ -195,6 +233,7 @@ final class SdkFailure {
   final String message;
   final bool isRetryable;
   final int? statusCode;
+  final String requestId;
   final Object? cause;
 }
 
@@ -224,7 +263,7 @@ The SDK maps every outcome through one table, so `code` and `isRetryable` are ne
 | --- | --- | --- |
 | Transport/socket failure | `transport` | `true` |
 | `SdkConfig.requestTimeout` elapsed | `timeout` | `true` |
-| Cancelled by `close()` | `cancelled` | `false` |
+| Cancelled by `close()` or `SdkCancelToken` | `cancelled` | `false` |
 | HTTP 401 or 403 | `unauthorized` | `false` |
 | HTTP 429 | `rate_limited` | `true` |
 | Other HTTP 4xx | `client` | `false` |
@@ -234,6 +273,11 @@ The SDK maps every outcome through one table, so `code` and `isRetryable` are ne
 The SDK never retries automatically; `isRetryable` is advice for the host.
 
 `SdkFailure.toString()` renders `code`, `statusCode`, and `message` only. It must never render `cause`, because `cause` may carry a URI or header captured from a failing request.
+
+Every failure produced for an SDK operation carries that operation's non-empty
+`requestId`. Hosts may give it to support staff; it is not a credential and is
+safe to render. A manually constructed `SdkFailure` must also supply it so new
+fields do not become an optional compatibility trap later.
 
 ```dart
 abstract interface class SdkLogger {
@@ -304,6 +348,19 @@ The sole v1 body representation is bytes. There is no file upload, multipart, st
 
 The SDK, not the transport, enforces `SdkConfig.requestTimeout`: on timeout it calls `cancel()` and throws `SdkException` with `SdkErrorCodes.timeout`. A transport must complete cancellation promptly; the SDK maps a cancellation caused by `close()` to `SdkErrorCodes.cancelled` for the affected in-flight operations.
 
+Before opening every SDK request, `SdkRequestExecutor` creates a fresh 128-bit
+lowercase hexadecimal request ID (32 hex characters), adds `X-Request-Id`, and adds
+`X-Sdk-Version: sdkVersion`. It is the only request path, so capabilities never
+invent version or correlation headers. The executor retains that ID for all
+failure paths, including timeout, close, token cancellation, transport errors,
+HTTP status mapping, and invalid successful bodies.
+
+Token cancellation follows the same teardown path as client close for its one
+operation: it invokes `SdkHttpCall.cancel()`, maps the operation to
+`SdkErrorCodes.cancelled`, and discards a late response. It does not call
+`SdkHttpTransport.close()`. As with every transport cancellation, this is
+best-effort and is not proof that the server did not process the request.
+
 `close()` is idempotent. It rejects new calls with `StateError`, calls `cancel()` for every active `SdkHttpCall`, awaits those `cancel()` futures, closes the owned transport, and then completes. Awaiting `cancel()` means awaiting the SDK's own teardown, not socket termination — see the best-effort rule above. `close()` neither persists state nor retries or restarts those operations.
 
 ## 7. Persistence and Connectivity Rules
@@ -347,6 +404,15 @@ The migration replaces application gates with package gates:
 5. `flutter pub publish --dry-run` reports `Package has 0 warnings.`, and the package declares no `publish_to: none` that would disable it. Reaching zero requires a root `.pubignore` excluding `docs/` and a Flutter constraint with no upper bound; both are deliberate, not concessions. The workflow never runs a publish command without `--dry-run`.
 6. CI packs the publishable archive, extracts it to a temporary directory, and resolves `example/` against **that extraction** instead of the working tree. This proves the example builds from only the files that would actually ship. Combined with gates 3 and 4 it replaces the heavier temporary-Git-dependency scheme: the archive proves file completeness, the lint and grep prove the example never reaches into `lib/src/`.
 7. CI builds the example Android host at `minSdk 24`; a macOS CI job builds the iOS host at deployment target 15.0. Both jobs pin the declared Flutter floor. If a future Flutter floor changes either derived number, this gate is what catches it.
+8. CI checks the declared Flutter floor (`3.47.0`) and latest stable through a
+   matrix. A support floor that is never compiled is not a compatibility
+   commitment.
+9. CI runs `dart doc` and Pana with no missing points. Pana is the pub.dev
+   package-quality analyzer; documentation, dependency freshness, and platform
+   metadata regressions must fail before publication.
+10. CI does not generate coverage data without reading it. The package either
+    enforces a documented coverage threshold or omits `--coverage`; v1 omits
+    the unused artifact rather than presenting it as a gate.
 
 `README.md` describes installation, minimal usage, error handling, lifecycle, support matrix, and the testing barrel. `CHANGELOG.md`, `LICENSE`, public API docs, and compatibility policy are release requirements, not deferred polish.
 

@@ -47,8 +47,9 @@ final sdk = SdkClient(
   ),
 );
 
+final cancelToken = SdkCancelToken();
 try {
-  final health = await sdk.health.check();
+  final health = await sdk.health.check(cancelToken: cancelToken);
   print(health.status);
 } on SdkException catch (error) {
   if (error.failure.code == SdkErrorCodes.unauthorized) {
@@ -79,6 +80,17 @@ work, and releases the transport.
 pending operations with `SdkErrorCodes.cancelled`, but the underlying socket may
 remain open until the server replies. Never treat a cancelled call as proof the
 server did not process the request.
+
+For per-operation cancellation, pass an `SdkCancelToken` to `health.check()` and
+call `cancel()` when the host leaves the operation's screen. Reusing one token
+deliberately cancels every in-flight operation using it. Cancellation never
+closes the client. Every request also carries `X-Sdk-Version` and a unique
+`X-Request-Id`; failures expose that request ID for support diagnostics.
+
+`sdkVersion` is the package version sent in `X-Sdk-Version`. `SdkConfig`,
+`SdkHealth`, and `SdkFailure` are value types with field-based equality;
+`SdkFailure.cause` is diagnostic-only and is excluded from equality and
+`toString()`.
 
 ## Testing
 

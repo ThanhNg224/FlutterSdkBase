@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_sdk_base/src/client/sdk_cancel_token.dart';
 import 'package:flutter_sdk_base/src/client/sdk_config.dart';
 import 'package:flutter_sdk_base/src/client/sdk_request_executor.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_error_codes.dart';
@@ -32,37 +33,46 @@ final class SdkHealthService {
   final SdkClock _clock;
 
   /// Asks the API whether it is healthy.
-  Future<SdkHealth> check() async {
-    final SdkHttpResponse response = await _executor.send(
+  ///
+  /// [cancelToken] provides best-effort per-operation cancellation. It stops
+  /// the SDK waiting for a response but cannot prove the server did not
+  /// receive or process the request. Throws [SdkException] for runtime
+  /// failures.
+  Future<SdkHealth> check({SdkCancelToken? cancelToken}) async {
+    final SdkRequestResult result = await _executor.send(
       SdkHttpRequest(
         method: 'GET',
         uri: SdkUri.join(_config.baseUri, 'health'),
         headers: _executor.authHeaders(),
       ),
+      cancelToken: cancelToken,
     );
+    final SdkHttpResponse response = result.response;
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw SdkException(failureForStatus(response.statusCode));
+      throw SdkException(failureForStatus(response.statusCode, requestId: result.requestId));
     }
 
     final Object? decoded = _decode(response.bodyAsString);
     if (decoded is! Map<String, Object?>) {
-      throw const SdkException(
+      throw SdkException(
         SdkFailure(
           code: SdkErrorCodes.invalidResponse,
           message: 'The health endpoint did not return a JSON object.',
           isRetryable: false,
+          requestId: result.requestId,
         ),
       );
     }
 
     final Object? status = decoded['status'];
     if (status is! String) {
-      throw const SdkException(
+      throw SdkException(
         SdkFailure(
           code: SdkErrorCodes.invalidResponse,
           message: 'The health response did not contain a string "status" field.',
           isRetryable: false,
+          requestId: result.requestId,
         ),
       );
     }
