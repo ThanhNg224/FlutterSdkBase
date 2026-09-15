@@ -22,7 +22,7 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze --fatal-infos
       - run: ./tool/check_boundaries.sh
-      - run: flutter test --coverage
+      - run: flutter test
       - run: flutter pub publish --dry-run
 
   example-from-archive:
