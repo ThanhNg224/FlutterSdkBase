@@ -39,13 +39,24 @@ jobs:
         run: |
           set -eux
           flutter pub get
-          # --dry-run lists exactly what would ship; build the same set as a tarball.
+          # Reproduce the PUBLISHED file set, not merely the tracked one: start
+          # from tracked files, then drop everything .pubignore excludes. The
+          # exclusion list is read from .pubignore so the two cannot drift.
+          # A file that exists only in the working tree must not be enough to
+          # build the example.
           mkdir -p /tmp/pkg
           git ls-files | tar -czf /tmp/package.tar.gz -T -
           tar -xzf /tmp/package.tar.gz -C /tmp/pkg
+          while IFS= read -r pattern; do
+            case "$pattern" in ''|'#'*) continue ;; esac
+            rm -rf "/tmp/pkg/${pattern%/}"
+          done < .pubignore
+          # example/ ships to pub.dev but here the consumer is the working copy.
           rm -rf /tmp/pkg/example
+          test -f /tmp/pkg/lib/flutter_sdk_base.dart
+          test ! -d /tmp/pkg/docs
           cd example
-          # Point at the extracted snapshot instead of the working tree.
+          # Point at the pruned snapshot instead of the working tree.
           sed -i 's|path: ../|path: /tmp/pkg|' pubspec.yaml
           flutter pub get
           flutter analyze --fatal-infos
