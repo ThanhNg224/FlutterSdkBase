@@ -12,3 +12,4 @@
 - Task 11: `flutter pub get` added example analyzer exclusions for generated `build/`, `android/`, and `ios/`; retained because the Flutter tool requires them to keep generated platform files out of analysis.
 2026-09-14 Task 13: removed named app-era framework references from the replacement docs so the plan's stale-document grep passes; the architecture rule remains that host state-management concerns stay outside `lib/src/`.
 - Task 13: sanitized secret-shaped API-key examples in the plan to the neutral `key` fixture; the repository secret scanner rejects credential-shaped documentation fixtures even though they are not credentials.
+- Acceptance review: `SdkRequestExecutor.close()` skipped `_transport.close()` whenever any `SdkHttpCall.cancel()` threw, leaking a host-injected transport. `Future.wait` is now wrapped in try/finally; the cancellation error is still rethrown rather than swallowed. Covered by a transport whose cancel fails.
