@@ -21,6 +21,7 @@ document when a rule changes.
 
 ## Commands
 
+- **Rename the package (do this first in a fresh clone):** `make rename NAME=my_company_sdk`
 - **Analyze:** `make analyze` (must report 0 issues)
 - **Test:** `make test`
 - **Full local gate:** `make verify`
