@@ -96,9 +96,17 @@ Future<void> main(List<String> arguments) async {
     return;
   }
 
+  final String directory = Directory.current.path.split(Platform.pathSeparator).last;
   print(
-    '\nNext: run `make verify`, then `cd example && flutter pub get`.\n'
-    'The checkout directory and the git remote are unchanged — rename those yourself.',
+    '\nNext:\n'
+    '  make verify\n'
+    '  cd example && flutter pub get && cd ..\n'
+    '\n'
+    'Not done for you, because neither is safe to guess — the checkout directory\n'
+    'cannot be renamed from inside itself, and only you know where this should\n'
+    'push:\n'
+    '  cd .. && mv $directory $newName && cd $newName\n'
+    '  git remote set-url origin <your repository url>',
   );
 }
 
