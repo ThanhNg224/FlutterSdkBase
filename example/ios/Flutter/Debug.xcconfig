@@ -1,1 +1,6 @@
 #include "Generated.xcconfig"
+
+// High-speed debug compilation & reduce DerivedData disk bloat
+COMPILER_INDEX_STORE_ENABLE = NO
+SWIFT_COMPILATION_MODE = singlefile
+ONLY_ACTIVE_ARCH = YES
