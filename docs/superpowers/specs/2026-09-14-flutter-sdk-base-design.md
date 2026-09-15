@@ -423,7 +423,9 @@ gate installs it with `dart pub global activate pana` and runs
 `dart pub global run pana . --exit-code-threshold 0`; the zero-deficit
 threshold does not accept a lower score. The generated API documentation gate
 runs immediately before Pana so documentation and package-quality regressions
-are checked together before the publish dry-run.
+are checked together before the publish dry-run. Locally, `make doc` runs
+`dart doc --validate-links`, and generated `doc/api` output remains ignored by
+Git and excluded from the publish archive.
 
 `README.md` describes installation, minimal usage, error handling, lifecycle, support matrix, and the testing barrel. `CHANGELOG.md`, `LICENSE`, public API docs, and compatibility policy are release requirements, not deferred polish.
 

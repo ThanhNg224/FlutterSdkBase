@@ -5,7 +5,7 @@ DART ?= dart
 
 .DEFAULT_GOAL := help
 
-.PHONY: help pub-get format format-check analyze test verify boundary publish-check ci rename
+.PHONY: help pub-get format format-check analyze test doc verify boundary publish-check ci rename
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -28,6 +28,9 @@ analyze: ## Run static analysis with infos treated as errors
 
 test: ## Run the package test suite
 	$(FLUTTER) test
+
+doc: ## Generate API documentation and fail on unresolved links
+	$(DART) doc --validate-links
 
 boundary: ## Fail if lib/src reaches into Flutter UI or dart:io
 	@! grep -rn "package:flutter/material.dart\|package:flutter/widgets.dart\|package:flutter/services.dart\|dart:io" lib/ \
