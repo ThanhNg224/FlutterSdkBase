@@ -13,3 +13,5 @@
   `SdkFailure.requestId` preserves the correlation ID for support diagnostics.
 - Added value equality and matching `hashCode` implementations for `SdkConfig`,
   `SdkHealth`, and `SdkFailure`; failure equality excludes diagnostic `cause`.
+- Declared Android and iOS as the package's supported pub.dev platforms, matching
+  the documented release support policy.
