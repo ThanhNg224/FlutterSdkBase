@@ -20,7 +20,9 @@
 - Operations throw `SdkException`; nothing returns a result type.
 - `StateError` is for host programming mistakes (use after close), never for
   runtime failures.
-- `code` and `isRetryable` come from `failureForStatus`, never from a call site.
+- HTTP-status `code` and `isRetryable` values come from `failureForStatus`,
+  never from a capability call site. `SdkRequestExecutor` owns the central
+  mappings for timeout, transport, and cancellation failures.
 - `SdkFailure.toString()` never renders `cause`.
 
 ## Logging
@@ -32,7 +34,9 @@
 ## Tests
 
 - No widget tests in the package — it ships no widgets.
-- Drive the SDK through `FakeSdkHttpTransport`, not a live server.
+- Drive capability and unit tests through `FakeSdkHttpTransport`. Use a local
+  loopback integration server only to prove the default `package:http`
+  transport on the wire; never depend on an external backend.
 - Test `package:http` wiring with `MockClient` from `package:http/testing.dart`.
 - Freeze time through the `SdkClock` seam rather than asserting on ranges.
 - Assert request IDs are propagated from captured headers to every failure path,
@@ -41,7 +45,8 @@
 ## Commands
 
 - `make verify` — format, analyze, boundary, test.
-- `make ci` — the above plus `pub get` and the publish dry-run.
+- `make ci` — the CI-equivalent local gate: `pub get`, verify, Dartdoc link
+  validation, Pana, and the publish dry-run.
 - `make doc` — generate API documentation with link validation and fail on
   unresolved links.
 - `./tool/check_boundaries.sh` — layering rules.

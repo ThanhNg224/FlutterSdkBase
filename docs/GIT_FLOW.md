@@ -18,17 +18,18 @@ Use Conventional Commits format:
 ```
 
 #### Allowed Types:
-- `feat`: A new feature or screen.
+- `feat`: A new SDK capability or public feature.
 - `fix`: A bug fix.
 - `refactor`: Code restructuring without changing behavior.
 - `chore`: Tooling, dependencies, or configuration changes.
+- `ci`: Continuous-integration configuration or gates.
 - `docs`: Documentation updates.
 - `test`: Adding or modifying tests.
 
 #### Examples:
-- `feat(catalog): implement capability grid`
-- `refactor(core): update AppColors and contrast thresholds`
-- `docs: add architecture and engineering rules`
+- `feat(health): add health capability mapping`
+- `refactor(executor): centralize response failure mapping`
+- `ci: add package quality gate`
 
 ---
 
