@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter_sdk_base/src/client/sdk_config.dart';
 import 'package:flutter_sdk_base/src/client/sdk_request_executor.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_error_codes.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_exception.dart';
 import 'package:flutter_sdk_base/src/transport/fake_sdk_http_transport.dart';
+import 'package:flutter_sdk_base/src/transport/sdk_http_call.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_request.dart';
+import 'package:flutter_sdk_base/src/transport/sdk_http_response.dart';
+import 'package:flutter_sdk_base/src/transport/sdk_http_transport.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/recording_sdk_logger.dart';
@@ -151,7 +156,49 @@ void main() {
         expect(logger.combined, contains('sk_l…4a1d'));
       },
     );
+
+    test('close releases the transport even when a call cancel fails', () async {
+      final transport = _FailingCancelTransport();
+      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
+
+      final Future<SdkException> pending = _captureSdkException(() => executor.send(_request()));
+      await Future<void>.delayed(Duration.zero);
+
+      await expectLater(executor.close(), throwsA(isA<StateError>()));
+      await pending;
+
+      expect(transport.isClosed, isTrue, reason: 'a failing cancel must not leak the transport');
+    });
   });
+}
+
+/// A transport whose calls fail while being cancelled, to prove `close()` still
+/// releases the transport instead of leaking it.
+final class _FailingCancelTransport implements SdkHttpTransport {
+  bool isClosed = false;
+
+  @override
+  SdkHttpCall open(SdkHttpRequest request) => _FailingCancelCall();
+
+  @override
+  Future<void> close() async {
+    isClosed = true;
+  }
+}
+
+final class _FailingCancelCall implements SdkHttpCall {
+  final Completer<SdkHttpResponse> _completer = Completer<SdkHttpResponse>();
+
+  @override
+  Future<SdkHttpResponse> get response => _completer.future;
+
+  @override
+  Future<void> cancel() async {
+    if (!_completer.isCompleted) {
+      _completer.completeError(const SdkCallCancelled());
+    }
+    throw StateError('cancel failed');
+  }
 }
 
 Future<SdkException> _captureSdkException(Future<void> Function() action) async {

@@ -120,8 +120,13 @@ final class SdkRequestExecutor {
     for (final _ActiveCall entry in pending) {
       entry.cancelCode = SdkErrorCodes.cancelled;
     }
-    await Future.wait<void>(pending.map((_ActiveCall entry) => entry.call.cancel()));
-    await _transport.close();
+    try {
+      await Future.wait<void>(pending.map((_ActiveCall entry) => entry.call.cancel()));
+    } finally {
+      // A transport that fails while cancelling must still be released, or the
+      // host leaks it. The cancellation error is rethrown rather than swallowed.
+      await _transport.close();
+    }
   }
 }
 
