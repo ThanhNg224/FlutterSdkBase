@@ -1,15 +1,40 @@
-# GitHub Copilot Instructions for FlutterCoreBase
+# GitHub Copilot Instructions for flutter_sdk_base
+
+This is a **Flutter package with no native code** — not an application, not a
+plugin. It ships an SDK that host apps depend on.
 
 ## Source of Truth
-Read `docs/` before implementing. This file is intentionally short and does not restate the rules that live there, so it can't drift out of sync — if a rule changes, it changes in `docs/`, not here.
 
-- `docs/ARCHITECTURE.md` — Feature-First layer boundaries, Riverpod Generator patterns, dependency rules.
-- `docs/STANDARD.md` — design system, localization, forms, storage, error handling, logging, and code quality (the authoritative rulebook).
-- `docs/CORE_MODULES.md` — the current inventory of `core/` (reusable widgets, utils, extensions). Check this before creating any new widget or helper.
+Read `docs/` before implementing. This file stays short on purpose and does not
+restate the rules, so it cannot drift — if a rule changes, change it in `docs/`.
+
+- `docs/ARCHITECTURE.md` — the barrel boundary, the single request path, how to add a capability.
+- `docs/STANDARD.md` — public API, error, logging and test rules (the authoritative rulebook).
+- `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` — the approved design and the reasoning behind each decision.
 - `docs/GIT_FLOW.md` — branching and commit conventions.
 
+## Non-negotiables
+
+These are enforced by CI, not by good intentions. Breaking one fails the build.
+
+- `lib/src/` may import `package:flutter/foundation.dart` and nothing else from
+  Flutter. No `material.dart`, `widgets.dart`, `services.dart`, no `dart:io`.
+  Tests may use `dart:io`; they never ship.
+- Only `lib/flutter_sdk_base.dart` and `lib/flutter_sdk_base_testing.dart` are
+  public API, and they export with `show`. Everything else is `lib/src/`.
+- No public signature mentions `package:http` or any other implementation type.
+- Every public type is prefixed `Sdk`; every public member has a doc comment.
+- No mutable static state — several `SdkClient` instances must run side by side.
+- `example/` never imports `lib/src/` and never uses a relative import into the
+  package.
+
 ## Verification
-- Code generation: `make codegen` (or `dart run build_runner build` followed by `dart format .`).
-- Analysis: `make analyze` must have 0 warnings.
+
+- Analysis: `make analyze` — must report `No issues found!`.
 - Tests: `make test`.
-- Local gate: `make verify`.
+- Layering: `make boundary`.
+- Publish readiness: `make publish-check` — must report `Package has 0 warnings.`
+- Local gate: `make verify`. CI-equivalent: `make ci`.
+
+There is no code generation in this package. If you reach for `build_runner`,
+Freezed, or a Riverpod generator, you are solving the wrong problem.
