@@ -50,4 +50,4 @@ final class HealthRepositoryProvider extends $FunctionalProvider<HealthRepositor
   }
 }
 
-String _$healthRepositoryHash() => r'723f31bfa31a3e3b4e9693365dd4e0745d16cb71';
+String _$healthRepositoryHash() => r'7b8c11a0347bc7ebcbe349b0d0dcdc72768423d4';

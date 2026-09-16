@@ -9,4 +9,5 @@ part 'health_repository_provider.g.dart';
 @riverpod
 HealthRepository healthRepository(Ref ref) => HealthRepositoryImpl(
   sdkClient: ref.watch(sdkClientProvider),
+  errorReporter: ref.watch(appErrorReporterProvider),
 );

@@ -1,9 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_sdk_base/flutter_sdk_base.dart';
 import 'package:flutter_sdk_base_example/app/providers/app_providers.dart';
 import 'package:flutter_sdk_base_example/core/demo/demo_health_scenario.dart';
 import 'package:flutter_sdk_base_example/core/demo/demo_sdk_http_transport.dart';
+import 'package:flutter_sdk_base_example/core/error/app_failure.dart';
+import 'package:flutter_sdk_base_example/core/observability/app_observability.dart';
+import 'package:flutter_sdk_base_example/core/observability/debug_app_observability.dart';
+import 'package:flutter_sdk_base_example/core/observability/noop_app_observability.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -42,6 +47,27 @@ void main() {
     expect(health.status, 'ok');
   });
 
+  test('the SDK client receives the host observer from Riverpod', () async {
+    final _RecordingObservability observability = _RecordingObservability();
+    final container = ProviderContainer(
+      overrides: [appObservabilityProvider.overrideWithValue(observability)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(sdkClientProvider).health.check();
+
+    expect(observability.operations, hasLength(1));
+    expect(observability.operations.single.operation, 'health.check');
+  });
+
+  test('the default observability provider is debug-only or silent', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final AppObservability observability = container.read(appObservabilityProvider);
+    expect(observability, kDebugMode ? isA<DebugAppObservability>() : isA<NoopAppObservability>());
+  });
+
   test('an unauthorized scenario maps to the SDK unauthorized error code', () async {
     final container = ProviderContainer(
       overrides: [
@@ -72,4 +98,17 @@ void main() {
 
     expect(transport.isClosed, isTrue);
   });
+}
+
+final class _RecordingObservability implements AppObservability {
+  final List<AppSdkOperation> operations = <AppSdkOperation>[];
+
+  @override
+  void recordSdkOperation(AppSdkOperation operation) => operations.add(operation);
+
+  @override
+  void reportFailure(AppFailure failure, AppFailureReportKind kind) {}
+
+  @override
+  void reportUnhandled(AppUnhandledError error) {}
 }

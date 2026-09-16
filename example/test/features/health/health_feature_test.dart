@@ -5,6 +5,8 @@ import 'package:flutter_sdk_base/flutter_sdk_base.dart';
 import 'package:flutter_sdk_base/flutter_sdk_base_testing.dart';
 import 'package:flutter_sdk_base_example/core/error/app_error_copy.dart';
 import 'package:flutter_sdk_base_example/core/error/app_failure.dart';
+import 'package:flutter_sdk_base_example/core/observability/app_observability.dart';
+import 'package:flutter_sdk_base_example/core/observability/noop_app_observability.dart';
 import 'package:flutter_sdk_base_example/features/health/data/health_repository_impl.dart';
 import 'package:flutter_sdk_base_example/features/health/data/health_repository_provider.dart';
 import 'package:flutter_sdk_base_example/features/health/domain/health_repository.dart';
@@ -19,7 +21,10 @@ void main() {
       final SdkClient sdk = _createClient(transport);
       addTearDown(sdk.close);
 
-      final HealthSnapshot snapshot = await HealthRepositoryImpl(sdkClient: sdk).check();
+      final HealthSnapshot snapshot = await HealthRepositoryImpl(
+        sdkClient: sdk,
+        errorReporter: const NoopAppObservability(),
+      ).check();
 
       expect(snapshot.isHealthy, isTrue);
       expect(snapshot.status, 'ok');
@@ -32,7 +37,10 @@ void main() {
       addTearDown(sdk.close);
 
       expect(
-        () => HealthRepositoryImpl(sdkClient: sdk).check(),
+        () => HealthRepositoryImpl(
+          sdkClient: sdk,
+          errorReporter: const NoopAppObservability(),
+        ).check(),
         throwsA(
           isA<AppFailure>()
               .having((AppFailure error) => error.code, 'code', SdkErrorCodes.unauthorized)
@@ -40,6 +48,23 @@ void main() {
               .having((AppFailure error) => error.requestId, 'request ID', isNotEmpty),
         ),
       );
+    });
+
+    test('reports one mapped SDK failure before rethrowing the host failure', () async {
+      final FakeSdkHttpTransport transport = FakeSdkHttpTransport()..enqueueJson('{}', statusCode: 503);
+      final SdkClient sdk = _createClient(transport);
+      addTearDown(sdk.close);
+      final _RecordingReporter reporter = _RecordingReporter();
+
+      await expectLater(
+        HealthRepositoryImpl(sdkClient: sdk, errorReporter: reporter).check(),
+        throwsA(isA<AppFailure>()),
+      );
+
+      expect(reporter.failures, hasLength(1));
+      expect(reporter.failures.single.failure.code, SdkErrorCodes.server);
+      expect(reporter.failures.single.failure.statusCode, 503);
+      expect(reporter.failures.single.kind, AppFailureReportKind.nonFatal);
     });
   });
 
@@ -68,7 +93,6 @@ void main() {
       test('maps ${entry.key} to host-owned copy', () {
         final AppFailure failure = AppFailure(
           code: entry.key,
-          message: 'diagnostic',
           isRetryable: false,
           requestId: 'request-1',
         );
@@ -84,7 +108,6 @@ void main() {
     test('uses a safe generic copy for an unknown AppFailure code', () {
       final AppFailure failure = AppFailure(
         code: 'future_code',
-        message: 'diagnostic',
         isRetryable: true,
         requestId: 'request-1',
       );
@@ -128,7 +151,6 @@ void main() {
       final DateTime checkedAt = DateTime.utc(2026, 9, 16, 12);
       final AppFailure failure = AppFailure(
         code: SdkErrorCodes.transport,
-        message: 'offline',
         isRetryable: true,
         requestId: 'request-1',
       );
@@ -175,6 +197,17 @@ ProviderContainer _containerWith(HealthRepository repository) => ProviderContain
     healthRepositoryProvider.overrideWithValue(repository),
   ],
 );
+
+final class _RecordingReporter implements AppErrorReporter {
+  final List<({AppFailure failure, AppFailureReportKind kind})> failures =
+      <({AppFailure failure, AppFailureReportKind kind})>[];
+
+  @override
+  void reportFailure(AppFailure failure, AppFailureReportKind kind) => failures.add((failure: failure, kind: kind));
+
+  @override
+  void reportUnhandled(AppUnhandledError error) {}
+}
 
 final class _SequenceHealthRepository implements HealthRepository {
   _SequenceHealthRepository({List<Future<HealthSnapshot> Function()>? responses})
