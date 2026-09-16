@@ -15,13 +15,7 @@ final healthRepositoryProvider = HealthRepositoryProvider._();
 
 /// Provides the Health domain repository backed by the app SDK client.
 
-final class HealthRepositoryProvider
-    extends
-        $FunctionalProvider<
-          HealthRepository,
-          HealthRepository,
-          HealthRepository
-        >
+final class HealthRepositoryProvider extends $FunctionalProvider<HealthRepository, HealthRepository, HealthRepository>
     with $Provider<HealthRepository> {
   /// Provides the Health domain repository backed by the app SDK client.
   HealthRepositoryProvider._()
@@ -40,8 +34,7 @@ final class HealthRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<HealthRepository> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<HealthRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   HealthRepository create(Ref ref) {
