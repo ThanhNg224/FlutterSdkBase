@@ -12,7 +12,7 @@ path described by the approved design.
 | Read this for... | File |
 | --- | --- |
 | Layer boundaries, the request path, adding a capability | `docs/ARCHITECTURE.md` |
-| Public API, error, logging and test rules | `docs/STANDARD.md` |
+| Public API, error, observability and test rules | `docs/STANDARD.md` |
 | The authoritative design decisions and their rationale | `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` |
 | Branching and commit conventions | `docs/GIT_FLOW.md` |
 
@@ -27,7 +27,9 @@ Android API 24+, and iOS 15.0+. Treat them as compatibility contracts.
 - Keep consumers on the explicit public barrels; `lib/src/` is implementation
   detail and has no compatibility guarantee.
 - Route requests through `SdkRequestExecutor`, preserving authentication,
-  timeout, best-effort cancellation, central failure mapping, and redaction.
+  timeout, best-effort cancellation, central failure mapping, and the safe
+  structured event boundary. Events must not contain or render credentials,
+  URI/path/query, headers, bodies, raw exceptions, or stack traces.
 - Make the smallest complete change and preserve existing conventions.
 
 ## Verification
