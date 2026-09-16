@@ -14,8 +14,7 @@ part of 'health_controller.dart';
 final healthControllerProvider = HealthControllerProvider._();
 
 /// Owns the asynchronous state of the Health feature.
-final class HealthControllerProvider
-    extends $AsyncNotifierProvider<HealthController, HealthSnapshot?> {
+final class HealthControllerProvider extends $AsyncNotifierProvider<HealthController, HealthSnapshot?> {
   /// Owns the asynchronous state of the Health feature.
   HealthControllerProvider._()
     : super(
