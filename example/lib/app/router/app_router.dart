@@ -10,31 +10,35 @@ part 'app_router.g.dart';
 
 /// Provides the host router and its stateful feature branches.
 @Riverpod(keepAlive: true)
-GoRouter appRouter(Ref ref) => GoRouter(
-  initialLocation: AppRouteNames.health,
-  routes: <RouteBase>[
-    GoRoute(path: '/', redirect: (BuildContext context, GoRouterState state) => AppRouteNames.health),
-    StatefulShellRoute.indexedStack(
-      builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
-          HostShell(navigationShell: navigationShell),
-      branches: <StatefulShellBranch>[
-        StatefulShellBranch(
-          routes: <RouteBase>[
-            GoRoute(
-              path: AppRouteNames.health,
-              builder: (BuildContext context, GoRouterState state) => const HealthPage(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: <RouteBase>[
-            GoRoute(
-              path: AppRouteNames.settings,
-              builder: (BuildContext context, GoRouterState state) => const SettingsPage(),
-            ),
-          ],
-        ),
-      ],
-    ),
-  ],
-);
+GoRouter appRouter(Ref ref) {
+  final GoRouter router = GoRouter(
+    initialLocation: AppRouteNames.health,
+    routes: <RouteBase>[
+      GoRoute(path: '/', redirect: (BuildContext context, GoRouterState state) => AppRouteNames.health),
+      StatefulShellRoute.indexedStack(
+        builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
+            HostShell(navigationShell: navigationShell),
+        branches: <StatefulShellBranch>[
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRouteNames.health,
+                builder: (BuildContext context, GoRouterState state) => const HealthPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRouteNames.settings,
+                builder: (BuildContext context, GoRouterState state) => const SettingsPage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+  ref.onDispose(router.dispose);
+  return router;
+}
