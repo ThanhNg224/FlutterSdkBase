@@ -15,7 +15,13 @@ final settingsViewDataProvider = SettingsViewDataProvider._();
 
 /// Provides read-only diagnostics without exposing the configured API key.
 
-final class SettingsViewDataProvider extends $FunctionalProvider<SettingsViewData, SettingsViewData, SettingsViewData>
+final class SettingsViewDataProvider
+    extends
+        $FunctionalProvider<
+          SettingsViewData,
+          SettingsViewData,
+          SettingsViewData
+        >
     with $Provider<SettingsViewData> {
   /// Provides read-only diagnostics without exposing the configured API key.
   SettingsViewDataProvider._()
@@ -34,7 +40,8 @@ final class SettingsViewDataProvider extends $FunctionalProvider<SettingsViewDat
 
   @$internal
   @override
-  $ProviderElement<SettingsViewData> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SettingsViewData> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   SettingsViewData create(Ref ref) {
