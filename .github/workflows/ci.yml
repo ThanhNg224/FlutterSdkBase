@@ -29,51 +29,8 @@ jobs:
       - run: flutter test
       - run: flutter pub publish --dry-run
 
-  example-from-archive:
-    name: Example builds from the publishable archive
-    runs-on: ubuntu-latest
-    needs: package
-    strategy:
-      fail-fast: false
-      matrix:
-        flutter: ['3.47.0', stable]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.flutter }}
-          channel: stable
-      - name: Pack the publishable archive and resolve the example against it
-        run: |
-          set -eux
-          flutter pub get
-          # Reproduce the PUBLISHED file set, not merely the tracked one: start
-          # from tracked files, then drop everything .pubignore excludes. The
-          # exclusion list is read from .pubignore so the two cannot drift.
-          # A file that exists only in the working tree must not be enough to
-          # build the example.
-          mkdir -p /tmp/pkg
-          git ls-files | tar -czf /tmp/package.tar.gz -T -
-          tar -xzf /tmp/package.tar.gz -C /tmp/pkg
-          while IFS= read -r pattern; do
-            case "$pattern" in ''|'#'*) continue ;; esac
-            rm -rf "/tmp/pkg/${pattern%/}"
-          done < .pubignore
-          # example/ ships to pub.dev but here the consumer is the working copy.
-          rm -rf /tmp/pkg/example
-          test -f /tmp/pkg/lib/flutter_sdk_base.dart
-          test ! -d /tmp/pkg/docs
-          cd example
-          # Point at the pruned snapshot instead of the working tree.
-          sed -i 's|path: ../|path: /tmp/pkg|' pubspec.yaml
-          flutter pub get
-          dart run build_runner build
-          dart format lib
-          flutter analyze --fatal-infos
-          flutter build apk --debug
-
-  android:
-    name: Android host (minSdk 24)
+  packaged-example-android:
+    name: Packaged Android example
     runs-on: ubuntu-latest
     needs: package
     strategy:
@@ -90,15 +47,7 @@ jobs:
         with:
           flutter-version: ${{ matrix.flutter }}
           channel: stable
-      - run: flutter pub get
-      - working-directory: example
-        run: |
-          set -eux
-          flutter pub get
-          dart run build_runner build
-          dart format lib
-          grep -q "flutter.minSdkVersion" android/app/build.gradle.kts
-          flutter build apk --debug
+      - run: make packaged-example PLATFORM=android
 
   ios:
     name: iOS host (deployment target 15.0)
@@ -114,12 +63,4 @@ jobs:
         with:
           flutter-version: ${{ matrix.flutter }}
           channel: stable
-      - run: flutter pub get
-      - working-directory: example
-        run: |
-          set -eux
-          flutter pub get
-          dart run build_runner build
-          dart format lib
-          grep -q "IPHONEOS_DEPLOYMENT_TARGET = 15.0" ios/Runner.xcodeproj/project.pbxproj
-          flutter build ios --debug --no-codesign
+      - run: make packaged-example PLATFORM=ios

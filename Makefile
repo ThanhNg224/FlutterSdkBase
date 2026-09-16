@@ -5,7 +5,7 @@ DART ?= dart
 
 .DEFAULT_GOAL := help
 
-.PHONY: help pub-get format format-check analyze test example-pub-get example-generate example-analyze example-test example-verify doc pana verify boundary publish-check ci rename clean
+.PHONY: help pub-get format format-check analyze test example-pub-get example-generate example-analyze example-test example-verify packaged-example doc pana verify boundary publish-check ci rename clean
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -42,6 +42,11 @@ example-test: example-generate ## Test the example host
 	cd example && $(FLUTTER) test -j 8
 
 example-verify: example-analyze example-test ## Run the example host gates
+
+packaged-example: ## Verify the example consumes an SDK staged from git archive HEAD; requires PLATFORM=android|ios
+	@test -n "$(PLATFORM)" || (echo "PLATFORM is required, e.g. make packaged-example PLATFORM=android"; exit 2)
+	@case "$(PLATFORM)" in android|ios) ;; *) echo "PLATFORM must be android or ios"; exit 2 ;; esac
+	./tool/verify_packaged_example.sh --platform "$(PLATFORM)"
 
 analyze: ## Run static analysis with infos treated as errors
 	$(FLUTTER) analyze --fatal-infos
