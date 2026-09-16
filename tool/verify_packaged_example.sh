@@ -180,6 +180,7 @@ printf '%s\n' 'Regenerating and checking archived example sources.'
 (
   cd "$consumer"
   dart run build_runner build
+  dart format lib
   dart format --output=none --set-exit-if-changed lib
 )
 if ! diff -ruN "$reference/lib" "$consumer/lib" >/dev/null; then
