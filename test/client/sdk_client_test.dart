@@ -2,6 +2,8 @@ import 'package:flutter_sdk_base/flutter_sdk_base.dart';
 import 'package:flutter_sdk_base/flutter_sdk_base_testing.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/recording_sdk_observer.dart';
+
 const String _testApiKey = 'test-api-key';
 
 SdkConfig _config() => SdkConfig(
@@ -21,6 +23,27 @@ void main() {
       await client.close();
     });
 
+    test('emits one terminal success event for a health check', () async {
+      final observer = RecordingSdkObserver();
+      final client = SdkClient(
+        config: _config(),
+        transport: FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}'),
+        observer: observer,
+      );
+
+      await client.health.check();
+
+      expect(observer.events, hasLength(1));
+      final event = observer.events.single;
+      expect(event.operation, 'health.check');
+      expect(event.sdkVersion, isNotEmpty);
+      expect(event.outcome, SdkOperationOutcome.succeeded);
+      expect(event.elapsed, greaterThanOrEqualTo(Duration.zero));
+      expect(event.failureCode, isNull);
+      expect(event.isRetryable, isNull);
+      await client.close();
+    });
+
     test('returns the same health service on repeated access', () {
       final client = SdkClient(config: _config(), transport: FakeSdkHttpTransport());
 
@@ -36,11 +59,34 @@ void main() {
       expect(transport.isClosed, isTrue);
     });
 
+    test('close emits one cancelled terminal event for in-flight work', () async {
+      final observer = RecordingSdkObserver();
+      final transport = FakeSdkHttpTransport()..enqueueNeverCompletes();
+      final client = SdkClient(config: _config(), transport: transport, observer: observer);
+      final Future<SdkException> pending = _captureSdkException(client.health.check);
+      await Future<void>.delayed(Duration.zero);
+
+      await client.close();
+      final SdkException error = await pending;
+
+      expect(error.failure.code, SdkErrorCodes.cancelled);
+      expect(observer.events, hasLength(1));
+      expect(observer.events.single.outcome, SdkOperationOutcome.failed);
+      expect(observer.events.single.failureCode, SdkErrorCodes.cancelled);
+      expect(observer.events.single.isRetryable, isFalse);
+    });
+
     test('an operation after close throws StateError', () async {
-      final client = SdkClient(config: _config(), transport: FakeSdkHttpTransport());
+      final observer = RecordingSdkObserver();
+      final client = SdkClient(
+        config: _config(),
+        transport: FakeSdkHttpTransport(),
+        observer: observer,
+      );
       await client.close();
 
       expect(client.health.check, throwsStateError);
+      expect(observer.events, isEmpty);
     });
 
     test('two clients run concurrently without sharing state', () async {
@@ -77,4 +123,13 @@ void main() {
       await client.close();
     });
   });
+}
+
+Future<SdkException> _captureSdkException(Future<SdkHealth> Function() action) async {
+  try {
+    await action();
+  } on SdkException catch (error) {
+    return error;
+  }
+  fail('expected an SdkException');
 }

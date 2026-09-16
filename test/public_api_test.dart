@@ -13,8 +13,9 @@ void main() {
     expect(SdkHttpCall, isNotNull);
     expect(SdkHttpRequest, isNotNull);
     expect(SdkHttpResponse, isNotNull);
-    expect(SdkLogger, isNotNull);
-    expect(SdkLogLevel, isNotNull);
+    expect(SdkObserver, isNotNull);
+    expect(SdkOperationEvent, isNotNull);
+    expect(SdkOperationOutcome, isNotNull);
     expect(SdkFailure, isNotNull);
     expect(SdkException, isNotNull);
     expect(SdkErrorCodes, isNotNull);

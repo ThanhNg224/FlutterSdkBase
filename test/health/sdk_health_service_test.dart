@@ -4,18 +4,19 @@ import 'package:flutter_sdk_base/src/errors/sdk_error_codes.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_exception.dart';
 import 'package:flutter_sdk_base/src/health/sdk_health.dart';
 import 'package:flutter_sdk_base/src/health/sdk_health_service.dart';
+import 'package:flutter_sdk_base/src/logging/sdk_observer.dart';
 import 'package:flutter_sdk_base/flutter_sdk_base.dart' show sdkVersion;
 import 'package:flutter_sdk_base/src/transport/fake_sdk_http_transport.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../support/recording_sdk_logger.dart';
+import '../support/recording_sdk_observer.dart';
 
 const String _testApiKey = 'test-api-key';
 final DateTime _frozenNow = DateTime.utc(2026, 9, 14, 10, 30);
 
 ({SdkHealthService service, FakeSdkHttpTransport transport}) _subject({
   Uri? baseUri,
-  RecordingSdkLogger? logger,
+  SdkObserver? observer,
 }) {
   final transport = FakeSdkHttpTransport();
   final config = SdkConfig(
@@ -26,7 +27,7 @@ final DateTime _frozenNow = DateTime.utc(2026, 9, 14, 10, 30);
     executor: SdkRequestExecutor(
       config: config,
       transport: transport,
-      logger: logger ?? RecordingSdkLogger(),
+      observer: observer ?? RecordingSdkObserver(),
     ),
     config: config,
     clock: () => _frozenNow,
@@ -111,8 +112,9 @@ void main() {
       expect(ids[0], isNot(ids[1]));
     });
 
-    test('maps 401 to unauthorized', () async {
-      final subject = _subject()..transport.enqueueJson('{}', statusCode: 401);
+    test('maps 401 to unauthorized and emits a terminal failure event', () async {
+      final observer = RecordingSdkObserver();
+      final subject = _subject(observer: observer)..transport.enqueueJson('{}', statusCode: 401);
 
       final SdkException error = await _captureSdkException(subject.service.check);
 
@@ -120,6 +122,10 @@ void main() {
       expect(error.failure.statusCode, 401);
       expect(error.failure.isRetryable, isFalse);
       expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
+      expect(observer.events, hasLength(1));
+      expect(observer.events.single.statusCode, 401);
+      expect(observer.events.single.failureCode, SdkErrorCodes.unauthorized);
+      expect(observer.events.single.isRetryable, isFalse);
     });
 
     test('maps 404 to client', () async {
@@ -131,24 +137,34 @@ void main() {
       expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
     });
 
-    test('maps 503 to a retryable server failure', () async {
-      final subject = _subject()..transport.enqueueJson('{}', statusCode: 503);
+    test('maps 503 to a retryable server failure and emits a terminal event', () async {
+      final observer = RecordingSdkObserver();
+      final subject = _subject(observer: observer)..transport.enqueueJson('{}', statusCode: 503);
 
       final SdkException error = await _captureSdkException(subject.service.check);
 
       expect(error.failure.code, SdkErrorCodes.server);
       expect(error.failure.isRetryable, isTrue);
       expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
+      expect(observer.events, hasLength(1));
+      expect(observer.events.single.statusCode, 503);
+      expect(observer.events.single.failureCode, SdkErrorCodes.server);
+      expect(observer.events.single.isRetryable, isTrue);
     });
 
-    test('maps a 2xx body that is not JSON to invalidResponse', () async {
-      final subject = _subject()..transport.enqueueJson('<html>oops</html>');
+    test('maps a 2xx body that is not JSON to invalidResponse and emits a terminal event', () async {
+      final observer = RecordingSdkObserver();
+      final subject = _subject(observer: observer)..transport.enqueueJson('<html>oops</html>');
 
       final SdkException error = await _captureSdkException(subject.service.check);
 
       expect(error.failure.code, SdkErrorCodes.invalidResponse);
       expect(error.failure.isRetryable, isFalse);
       expect(error.failure.requestId, subject.transport.requests.single.headers['X-Request-Id']);
+      expect(observer.events, hasLength(1));
+      expect(observer.events.single.statusCode, 200);
+      expect(observer.events.single.failureCode, SdkErrorCodes.invalidResponse);
+      expect(observer.events.single.isRetryable, isFalse);
     });
 
     test('maps a 2xx JSON body without a status field to invalidResponse', () async {

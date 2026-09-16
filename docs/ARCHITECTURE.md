@@ -18,16 +18,17 @@ side by side.
 ## 3. One path through the SDK
 
 Every request goes through `SdkRequestExecutor`. It applies authentication, the
-timeout, cancellation, logging, and the failure-mapping table. A capability such
+timeout, cancellation, structured operation observation, and the failure-mapping table. A capability such
 as `SdkHealthService` builds a request and interprets a response; it never
 invents its own error handling or retry policy.
 
 ```
 SdkClient ──► SdkRequestExecutor ──► SdkHttpTransport ──► (package:http)
                     │
-                    ├── authHeaders()      apiKey, redacted in every log
+                    ├── authHeaders()      apiKey, never included in events
                     ├── timeout + cancel   best-effort
                     ├── cancellation + correlation headers
+                    ├── terminal event    one safe event per operation
                     └── failureForStatus() the single error table
 ```
 
@@ -36,8 +37,9 @@ SdkClient ──► SdkRequestExecutor ──► SdkHttpTransport ──► (pac
 1. Add `lib/src/<capability>/` with a value type and a service.
 2. Give the service an `@internal` constructor taking the executor and config.
 3. Build the request with `SdkUri.join` and `executor.authHeaders()`.
-4. Map non-2xx through `failureForStatus`; map unparseable 2xx to
-   `SdkErrorCodes.invalidResponse`. The executor supplies the request ID to
+4. Let the executor map non-2xx through `failureForStatus` and capture one
+   terminal event. Decode only successful 2xx responses; map unparseable bodies
+   to `SdkErrorCodes.invalidResponse`. The executor supplies the request ID to
    every failure path.
 5. Expose it from `SdkClient` and export it from the barrel with `show`.
 6. Add the error codes it introduces to `SdkErrorCodes` and `CHANGELOG.md`.

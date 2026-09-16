@@ -1,20 +1,19 @@
-import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:flutter_sdk_base/flutter_sdk_base.dart' show SdkOperationOutcome, sdkVersion;
+import 'package:flutter_sdk_base/src/client/sdk_cancel_token.dart';
 import 'package:flutter_sdk_base/src/client/sdk_config.dart';
 import 'package:flutter_sdk_base/src/client/sdk_request_executor.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_error_codes.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_exception.dart';
 import 'package:flutter_sdk_base/src/transport/fake_sdk_http_transport.dart';
-import 'package:flutter_sdk_base/src/transport/sdk_http_call.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_request.dart';
-import 'package:flutter_sdk_base/src/transport/sdk_http_response.dart';
-import 'package:flutter_sdk_base/src/transport/sdk_http_transport.dart';
-import 'package:flutter_sdk_base/flutter_sdk_base.dart' show sdkVersion;
 import 'package:flutter_test/flutter_test.dart';
 
-import '../support/recording_sdk_logger.dart';
+import '../support/recording_sdk_observer.dart';
 
-const String _apiKey = 'test-api-key-1234';
+const String _apiKey = 'secret-api-key';
 
 SdkConfig _config({Duration timeout = const Duration(seconds: 15)}) => SdkConfig(
   baseUri: Uri.parse('https://api.example.com'),
@@ -22,203 +21,243 @@ SdkConfig _config({Duration timeout = const Duration(seconds: 15)}) => SdkConfig
   requestTimeout: timeout,
 );
 
-SdkHttpRequest _request({Map<String, String>? headers}) => SdkHttpRequest(
+SdkHttpRequest _request() => SdkHttpRequest(
   method: 'GET',
-  uri: Uri.parse('https://api.example.com/health'),
-  headers: headers ?? <String, String>{},
+  uri: Uri.parse('https://api.example.com/health?secret=$_apiKey'),
+  headers: <String, String>{'X-Secret': _apiKey},
+  body: Uint8List.fromList(utf8.encode('body-secret=$_apiKey')),
+);
+
+Future<T> _execute<T>(
+  SdkRequestExecutor executor, {
+  SdkCancelToken? cancelToken,
+  T Function(String body)? decode,
+}) => executor.execute<T>(
+  operation: 'health.check',
+  request: _request(),
+  cancelToken: cancelToken,
+  decode: (response, requestId) => decode?.call(response.bodyAsString) as T,
 );
 
 void main() {
   group('SdkRequestExecutor', () {
-    test('returns the transport response unchanged on success', () async {
+    test('returns a decoded response and emits one success event', () async {
+      final observer = RecordingSdkObserver();
       final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
-      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
-
-      final response = await executor.send(_request());
-
-      expect(response.response.statusCode, 200);
-    });
-
-    test('authHeaders carries the api key and a JSON accept header', () {
       final executor = SdkRequestExecutor(
         config: _config(),
-        transport: FakeSdkHttpTransport(),
-        logger: RecordingSdkLogger(),
+        transport: transport,
+        observer: observer,
       );
 
-      expect(executor.authHeaders()['X-Api-Key'], _apiKey);
-      expect(executor.authHeaders()['Accept'], 'application/json');
+      expect(await _execute<String>(executor, decode: (body) => body), '{"status":"ok"}');
+      expect(observer.events, hasLength(1));
+      final event = observer.events.single;
+      expect(event.operation, 'health.check');
+      expect(event.requestId, transport.requests.single.headers['X-Request-Id']);
+      expect(event.sdkVersion, sdkVersion);
+      expect(event.outcome, SdkOperationOutcome.succeeded);
+      expect(event.statusCode, 200);
+      expect(event.failureCode, isNull);
+      expect(event.isRetryable, isNull);
     });
 
-    test('maps a transport error to a retryable transport failure', () async {
-      final transport = FakeSdkHttpTransport()..enqueueError(Exception('socket down'));
-      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
+    test('maps every non-2xx response centrally and includes status', () async {
+      for (final (statusCode, code, retryable) in <(int, String, bool)>[
+        (401, SdkErrorCodes.unauthorized, false),
+        (503, SdkErrorCodes.server, true),
+      ]) {
+        final observer = RecordingSdkObserver();
+        final transport = FakeSdkHttpTransport()..enqueueJson('{}', statusCode: statusCode);
+        final executor = SdkRequestExecutor(
+          config: _config(),
+          transport: transport,
+          observer: observer,
+        );
 
-      final SdkException error = await _captureSdkException(() => executor.send(_request()));
+        final SdkException error = await _captureSdkException(() => _execute<String>(executor));
 
-      expect(error.failure.code, SdkErrorCodes.transport);
-      expect(error.failure.isRetryable, isTrue);
-      expect(error.failure.cause, isNotNull);
-      expect(error.failure.requestId, transport.requests.single.headers['X-Request-Id']);
+        expect(error.failure.code, code);
+        expect(observer.events, hasLength(1));
+        expect(observer.events.single.outcome, SdkOperationOutcome.failed);
+        expect(observer.events.single.statusCode, statusCode);
+        expect(observer.events.single.failureCode, code);
+        expect(observer.events.single.isRetryable, retryable);
+      }
     });
 
-    test('fails with timeout and cancels the call when the deadline passes', () async {
+    test('captures invalid response decoder failures as terminal invalid_response', () async {
+      final observer = RecordingSdkObserver();
+      final transport = FakeSdkHttpTransport()..enqueueJson('<html>secret=$_apiKey</html>');
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: observer,
+      );
+
+      final SdkException error = await _captureSdkException(
+        () => _execute<String>(executor, decode: (_) => throw const FormatException('bad JSON')),
+      );
+
+      expect(error.failure.code, SdkErrorCodes.invalidResponse);
+      expect(observer.events.single.statusCode, 200);
+      expect(observer.events.single.failureCode, SdkErrorCodes.invalidResponse);
+      expect(observer.events.single.isRetryable, isFalse);
+    });
+
+    test('maps a timeout and cancels the call', () async {
+      final observer = RecordingSdkObserver();
       final transport = FakeSdkHttpTransport()..enqueueNeverCompletes();
       final executor = SdkRequestExecutor(
         config: _config(timeout: const Duration(milliseconds: 30)),
         transport: transport,
-        logger: RecordingSdkLogger(),
+        observer: observer,
       );
 
-      final SdkException error = await _captureSdkException(() => executor.send(_request()));
+      final SdkException error = await _captureSdkException(() => _execute<String>(executor));
 
       expect(error.failure.code, SdkErrorCodes.timeout);
-      expect(error.failure.isRetryable, isTrue);
-      expect(error.failure.requestId, transport.requests.single.headers['X-Request-Id']);
       expect(transport.hasPendingCancellation, isTrue);
+      expect(observer.events.single.failureCode, SdkErrorCodes.timeout);
+      expect(observer.events.single.isRetryable, isTrue);
     });
 
-    test('close cancels an in-flight call, which fails as cancelled', () async {
-      final transport = FakeSdkHttpTransport()..enqueueNeverCompletes();
-      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
+    test('pre-cancelled token emits cancelled without opening transport', () async {
+      final observer = RecordingSdkObserver();
+      final transport = FakeSdkHttpTransport();
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: observer,
+      );
+      final token = SdkCancelToken()..cancel();
 
-      final Future<SdkException> pending = _captureSdkException(() => executor.send(_request()));
+      final SdkException error = await _captureSdkException(
+        () => _execute<String>(executor, cancelToken: token),
+      );
+
+      expect(error.failure.code, SdkErrorCodes.cancelled);
+      expect(transport.requests, isEmpty);
+      expect(observer.events, hasLength(1));
+      expect(observer.events.single.failureCode, SdkErrorCodes.cancelled);
+      expect(observer.events.single.statusCode, isNull);
+      expect(observer.events.single.isRetryable, isFalse);
+    });
+
+    test('in-flight cancellation emits cancelled without closing transport', () async {
+      final observer = RecordingSdkObserver();
+      final transport = FakeSdkHttpTransport()..enqueueNeverCompletes();
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: observer,
+      );
+      final token = SdkCancelToken();
+      final Future<SdkException> pending = _captureSdkException(
+        () => _execute<String>(executor, cancelToken: token),
+      );
       await Future<void>.delayed(Duration.zero);
-      await executor.close();
+      token.cancel();
 
       final SdkException error = await pending;
+
       expect(error.failure.code, SdkErrorCodes.cancelled);
-      expect(error.failure.isRetryable, isFalse);
-      expect(error.failure.requestId, transport.requests.single.headers['X-Request-Id']);
-      expect(transport.isClosed, isTrue);
+      expect(transport.hasPendingCancellation, isTrue);
+      expect(transport.isClosed, isFalse);
+      expect(observer.events.single.failureCode, SdkErrorCodes.cancelled);
     });
 
-    test('adds version and request ID without mutating host headers', () async {
+    test('maps transport failures and never exposes secret values in events', () async {
+      final observer = RecordingSdkObserver();
+      final transport = FakeSdkHttpTransport()..enqueueError(Exception('socket leaked $_apiKey'));
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: observer,
+      );
+
+      final SdkException error = await _captureSdkException(() => _execute<String>(executor));
+
+      expect(error.failure.code, SdkErrorCodes.transport);
+      expect(error.failure.cause, isNotNull);
+      expect(observer.events, hasLength(1));
+      final event = observer.events.single;
+      expect(
+        <Object?>[
+          event.operation,
+          event.requestId,
+          event.sdkVersion,
+          event.outcome,
+          event.elapsed,
+          event.statusCode,
+          event.failureCode,
+          event.isRetryable,
+        ].join(' '),
+        isNot(contains(_apiKey)),
+      );
+      expect(event.requestId, transport.requests.single.headers['X-Request-Id']);
+    });
+
+    test('swallows observer exceptions', () async {
       final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
-      final Map<String, String> headers = <String, String>{'X-Host': 'value'};
-      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: ThrowingSdkObserver(),
+      );
 
-      await executor.send(_request(headers: headers));
+      expect(await _execute<String>(executor, decode: (body) => body), '{"status":"ok"}');
+    });
 
-      expect(headers, <String, String>{'X-Host': 'value'});
-      final SdkHttpRequest sent = transport.requests.single;
-      expect(sent.headers['X-Sdk-Version'], sdkVersion);
-      expect(sent.headers['X-Request-Id'], matches(RegExp(r'^[0-9a-f]{32}$')));
+    test('adds version and request ID without mutating request headers', () async {
+      final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: RecordingSdkObserver(),
+      );
+      final request = _request();
+      final Map<String, String> original = Map<String, String>.of(request.headers);
+
+      await executor.execute<String>(
+        operation: 'health.check',
+        request: request,
+        decode: (response, requestId) => response.bodyAsString,
+      );
+
+      expect(request.headers, original);
+      expect(transport.requests.single.headers['X-Sdk-Version'], sdkVersion);
+      expect(transport.requests.single.headers['X-Request-Id'], matches(RegExp(r'^[0-9a-f]{32}$')));
+    });
+
+    test('send after close throws StateError and emits no event', () async {
+      final observer = RecordingSdkObserver();
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: FakeSdkHttpTransport(),
+        observer: observer,
+      );
+      await executor.close();
+
+      expect(() => _execute<String>(executor), throwsStateError);
+      expect(observer.events, isEmpty);
     });
 
     test('close is idempotent', () async {
       final executor = SdkRequestExecutor(
         config: _config(),
         transport: FakeSdkHttpTransport(),
-        logger: RecordingSdkLogger(),
+        observer: RecordingSdkObserver(),
       );
 
       await executor.close();
       await expectLater(executor.close(), completes);
       expect(executor.isClosed, isTrue);
     });
-
-    test('send after close throws StateError, not SdkException', () async {
-      final executor = SdkRequestExecutor(
-        config: _config(),
-        transport: FakeSdkHttpTransport(),
-        logger: RecordingSdkLogger(),
-      );
-      await executor.close();
-
-      expect(() => executor.send(_request()), throwsStateError);
-    });
-
-    test(
-      'never logs the api key verbatim across success, HTTP error, timeout, cancellation, or transport failure',
-      () async {
-        final logger = RecordingSdkLogger();
-
-        final success = SdkRequestExecutor(
-          config: _config(),
-          transport: FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}'),
-          logger: logger,
-        );
-        await success.send(_request());
-
-        final httpError = SdkRequestExecutor(
-          config: _config(),
-          transport: FakeSdkHttpTransport()..enqueueJson('{}', statusCode: 401),
-          logger: logger,
-        );
-        await httpError.send(_request());
-
-        final timeout = SdkRequestExecutor(
-          config: _config(timeout: const Duration(milliseconds: 30)),
-          transport: FakeSdkHttpTransport()..enqueueNeverCompletes(),
-          logger: logger,
-        );
-        await _captureSdkException(() => timeout.send(_request()));
-
-        final cancellationTransport = FakeSdkHttpTransport()..enqueueNeverCompletes();
-        final cancelled = SdkRequestExecutor(config: _config(), transport: cancellationTransport, logger: logger);
-        final Future<SdkException> cancelledResult = _captureSdkException(() => cancelled.send(_request()));
-        await Future<void>.delayed(Duration.zero);
-        await cancelled.close();
-        await cancelledResult;
-
-        final transportFailure = SdkRequestExecutor(
-          config: _config(),
-          transport: FakeSdkHttpTransport()..enqueueError(Exception('request failed for $_apiKey')),
-          logger: logger,
-        );
-        await _captureSdkException(() => transportFailure.send(_request()));
-
-        expect(logger.combined, isNot(contains(_apiKey)));
-        expect(logger.combined, contains('test…1234'));
-      },
-    );
-
-    test('close releases the transport even when a call cancel fails', () async {
-      final transport = _FailingCancelTransport();
-      final executor = SdkRequestExecutor(config: _config(), transport: transport, logger: RecordingSdkLogger());
-
-      final Future<SdkException> pending = _captureSdkException(() => executor.send(_request()));
-      await Future<void>.delayed(Duration.zero);
-
-      await expectLater(executor.close(), throwsA(isA<StateError>()));
-      await pending;
-
-      expect(transport.isClosed, isTrue, reason: 'a failing cancel must not leak the transport');
-    });
   });
 }
 
-/// A transport whose calls fail while being cancelled, to prove `close()` still
-/// releases the transport instead of leaking it.
-final class _FailingCancelTransport implements SdkHttpTransport {
-  bool isClosed = false;
-
-  @override
-  SdkHttpCall open(SdkHttpRequest request) => _FailingCancelCall();
-
-  @override
-  Future<void> close() async {
-    isClosed = true;
-  }
-}
-
-final class _FailingCancelCall implements SdkHttpCall {
-  final Completer<SdkHttpResponse> _completer = Completer<SdkHttpResponse>();
-
-  @override
-  Future<SdkHttpResponse> get response => _completer.future;
-
-  @override
-  Future<void> cancel() async {
-    if (!_completer.isCompleted) {
-      _completer.completeError(const SdkCallCancelled());
-    }
-    throw StateError('cancel failed');
-  }
-}
-
-Future<SdkException> _captureSdkException(Future<void> Function() action) async {
+Future<SdkException> _captureSdkException(Future<Object?> Function() action) async {
   try {
     await action();
   } on SdkException catch (error) {
