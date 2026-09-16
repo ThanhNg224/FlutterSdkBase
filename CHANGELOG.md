@@ -8,6 +8,11 @@
 - Replaced `SdkLogger`, `SdkLogLevel`, and redaction APIs with silent-by-default
   structured `SdkObserver` operation events. Events contain only safe outcome,
   timing, correlation, status, and retry metadata.
+- Added a vendor-neutral host observability boundary: hosts own SDK telemetry,
+  error-reporting policy, unhandled Flutter/platform error bindings, and
+  user-facing error copy; the base release remains silent by default.
+- Added an independent packaged-consumer release gate for staged Android and
+  iOS example builds from committed `git archive HEAD` snapshots.
 - `FakeSdkHttpTransport` in `flutter_sdk_base_testing.dart`.
 - Added SDK-owned per-operation cancellation through `SdkCancelToken`; reuse a
   token deliberately to cancel a group of in-flight operations.

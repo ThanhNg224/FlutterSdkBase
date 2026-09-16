@@ -9,7 +9,7 @@ Read `docs/` before implementing. This file stays short on purpose and does not
 restate the rules, so it cannot drift — if a rule changes, change it in `docs/`.
 
 - `docs/ARCHITECTURE.md` — the barrel boundary, the single request path, how to add a capability.
-- `docs/STANDARD.md` — public API, error, logging and test rules (the authoritative rulebook).
+- `docs/STANDARD.md` — public API, error, observability and test rules (the authoritative rulebook).
 - `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` — the approved design and the reasoning behind each decision.
 - `docs/GIT_FLOW.md` — branching and commit conventions.
 

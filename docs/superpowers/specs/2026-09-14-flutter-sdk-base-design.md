@@ -81,13 +81,17 @@ The Android and iOS floors are **derived from the declared Flutter floor, not ch
 
 The root package contains no Android or iOS runner. The `example/` host carries these deployment floors and CI must build it for both supported platforms. A package implementation must not use `dart:io` or platform-specific APIs; package tests may, because they never ship.
 
-Semantic versioning is mandatory from the first released version:
+The package is pre-1.0 and under active development. Semantic-version-style
+release labels are still useful, but API compatibility is not a promise yet:
 
 - Only declarations exported by `lib/flutter_sdk_base.dart` and `lib/flutter_sdk_base_testing.dart` are supported public API.
 - `lib/src/` is implementation detail and has no compatibility guarantee.
-- Removing or changing a public API, changing or removing an `SdkErrorCodes` value, or raising a support floor is a breaking change.
-- Adding a documented API or a new error code is non-breaking.
-- A deprecated public API remains supported for at least one minor release and the replacement plus removal target are recorded in `CHANGELOG.md`.
+- Removing or changing a public API, changing or removing an `SdkErrorCodes` value,
+  or raising a support floor may be done between pre-1.0 releases when it
+  improves the long-term design. Such changes must be recorded in
+  `CHANGELOG.md`.
+- Additive changes are preferred, but no deprecation-duration guarantee is
+  made before the first stable release.
 - Each release updates `CHANGELOG.md` with user-visible API, behavior, dependency, and support-matrix changes.
 
 ## 3. Package Boundary and Layout
