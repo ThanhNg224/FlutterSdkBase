@@ -67,6 +67,8 @@ jobs:
           # Point at the pruned snapshot instead of the working tree.
           sed -i 's|path: ../|path: /tmp/pkg|' pubspec.yaml
           flutter pub get
+          dart run build_runner build
+          dart format lib
           flutter analyze --fatal-infos
           flutter build apk --debug
 
@@ -93,6 +95,8 @@ jobs:
         run: |
           set -eux
           flutter pub get
+          dart run build_runner build
+          dart format lib
           grep -q "flutter.minSdkVersion" android/app/build.gradle.kts
           flutter build apk --debug
 
@@ -115,5 +119,7 @@ jobs:
         run: |
           set -eux
           flutter pub get
+          dart run build_runner build
+          dart format lib
           grep -q "IPHONEOS_DEPLOYMENT_TARGET = 15.0" ios/Runner.xcodeproj/project.pbxproj
           flutter build ios --debug --no-codesign

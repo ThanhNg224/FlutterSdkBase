@@ -36,5 +36,7 @@ These are enforced by CI, not by good intentions. Breaking one fails the build.
 - Publish readiness: `make publish-check` — must report `Package has 0 warnings.`
 - Local gate: `make verify`. CI-equivalent: `make ci`.
 
-There is no code generation in this package. If you reach for `build_runner`,
-Freezed, or a Riverpod generator, you are solving the wrong problem.
+The SDK package itself has no code generation and must not gain a generator
+dependency. The independent `example/` host intentionally uses Riverpod
+Generator: run `make example-generate` after changing an annotated provider,
+and keep the generated `example/lib/**/*.g.dart` files committed and formatted.

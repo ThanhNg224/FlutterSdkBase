@@ -5,7 +5,7 @@ DART ?= dart
 
 .DEFAULT_GOAL := help
 
-.PHONY: help pub-get format format-check analyze test doc pana verify boundary publish-check ci rename clean
+.PHONY: help pub-get format format-check analyze test example-pub-get example-generate example-analyze example-test example-verify doc pana verify boundary publish-check ci rename clean
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -26,8 +26,22 @@ rename: ## Rename the package everywhere; requires NAME=my_company_sdk
 format: ## Format all Dart files
 	$(DART) format .
 
-format-check: ## Verify formatting without changing files
+format-check: example-generate ## Verify formatting without changing files
 	$(DART) format --output=none --set-exit-if-changed .
+
+example-pub-get: ## Resolve example host dependencies
+	cd example && $(FLUTTER) pub get
+
+example-generate: example-pub-get ## Generate Riverpod providers for the example host
+	cd example && $(DART) run build_runner build && $(DART) format lib
+
+example-analyze: example-generate ## Analyze the example host
+	cd example && $(FLUTTER) analyze --fatal-infos
+
+example-test: example-generate ## Test the example host
+	cd example && $(FLUTTER) test -j 8
+
+example-verify: example-analyze example-test ## Run the example host gates
 
 analyze: ## Run static analysis with infos treated as errors
 	$(FLUTTER) analyze --fatal-infos
@@ -50,6 +64,6 @@ boundary: ## Fail if lib/src reaches into Flutter UI or dart:io
 publish-check: ## Verify the package would publish cleanly
 	$(FLUTTER) pub publish --dry-run
 
-verify: format-check analyze boundary test ## Local pre-commit gate
+verify: format-check analyze boundary test example-verify ## Local pre-commit gate
 
 ci: pub-get verify doc pana publish-check ## CI-equivalent local gate

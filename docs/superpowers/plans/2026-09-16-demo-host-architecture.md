@@ -15,7 +15,7 @@
 - Change only the host example, host tooling/CI, and host documentation; do not change the SDK public barrels or `lib/src/`.
 - Preserve Dart `>=3.13.0 <4.0.0`, Flutter `>=3.47.0`, Android API 24+, and iOS 15.0+.
 - `example/` imports the SDK only through `package:flutter_sdk_base/flutter_sdk_base.dart` and `package:flutter_sdk_base/flutter_sdk_base_testing.dart`; no SDK-internal or relative imports.
-- Use Riverpod Generator for all providers; generated `.g.dart` files are committed and regenerated with `dart run build_runner build --delete-conflicting-outputs`.
+- Use Riverpod Generator for all providers; generated `.g.dart` files are committed and regenerated with `dart run build_runner build`.
 - Keep the demo deterministic and offline through a host-only adapter over `FakeSdkHttpTransport`; never add real credentials, persistence, or an external backend.
 - Keep UI styling out of unit-test assertions; test state transitions, provider wiring, routing behavior, and user-visible error/diagnostic content.
 - Preserve the pre-existing unrelated working-tree modification in `docs/GIT_FLOW.md` and never stage it.
@@ -39,7 +39,7 @@
 - [ ] Add the exact runtime/dev dependencies listed in the plan header.
 - [ ] Implement the deterministic adapter without exposing `FakeSdkHttpTransport` outside host infrastructure and without logging or displaying `apiKey`.
 - [ ] Generate provider code and test that the default client returns healthy data, an overridden unauthorized scenario maps to `SdkErrorCodes.unauthorized`, and provider disposal closes the SDK transport.
-- [ ] Run `cd example && flutter pub get && dart run build_runner build --delete-conflicting-outputs && flutter test test/app/providers/app_providers_test.dart`.
+- [ ] Run `cd example && flutter pub get && dart run build_runner build && flutter test test/app/providers/app_providers_test.dart`.
 - [ ] Commit only Task 1 files with `feat(example): add riverpod sdk wiring`.
 
 ### Task 2: Build the Health feature vertical slice
@@ -61,7 +61,7 @@
 
 - [ ] Write tests for SDK-to-domain mapping, all known error-code mappings, controller idle/loading/success/error transitions, and retry after an error.
 - [ ] Implement the repository, generated providers, controller, and presentational widgets. The page must use `ConsumerWidget`, `AsyncValue`, `SafeArea`, and callbacks into the controller; it must not use `setState` or create an SDK client.
-- [ ] Run `cd example && dart run build_runner build --delete-conflicting-outputs && flutter test test/features/health/health_feature_test.dart`.
+- [ ] Run `cd example && dart run build_runner build && flutter test test/features/health/health_feature_test.dart`.
 - [ ] Commit only Task 2 files with `feat(example): add health feature layers`.
 
 ### Task 3: Add host shell, routing, Settings diagnostics, and bootstrap
@@ -79,7 +79,7 @@
 
 - [ ] Add the router, shell, theme, settings diagnostics provider/page, and bootstrap around the completed Health feature.
 - [ ] Add widget behavior tests for initial Health route, navigation to Settings, successful health check, and unauthorized error copy using a provider override; do not assert colors, padding, or exact widget tree styling.
-- [ ] Run `cd example && dart run build_runner build --delete-conflicting-outputs && flutter test test/app/host_app_test.dart`.
+- [ ] Run `cd example && dart run build_runner build && flutter test test/app/host_app_test.dart`.
 - [ ] Commit only Task 3 files with `feat(example): add host shell and routing`.
 
 ### Task 4: Make host verification and documentation canonical
