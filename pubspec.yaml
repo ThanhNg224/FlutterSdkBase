@@ -1,5 +1,5 @@
 name: flutter_sdk_base
-description: "A template for building a Flutter SDK package with no native code: instance-based client, injectable HTTP transport, typed failures, and safe logging."
+description: "A template for building a Flutter SDK package with no native code: instance-based client, injectable HTTP transport, typed failures, and safe structured operation observability."
 version: 0.1.0
 homepage: https://github.com/ThanhNg224/FlutterSdkBase
 repository: https://github.com/ThanhNg224/FlutterSdkBase

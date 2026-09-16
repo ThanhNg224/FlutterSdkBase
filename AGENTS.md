@@ -14,7 +14,7 @@ Read the relevant engineering document before implementing a change:
 | Read this for... | File |
 | --- | --- |
 | Layer boundaries, the request path, adding a capability | `docs/ARCHITECTURE.md` |
-| Public API, error, logging and test rules | `docs/STANDARD.md` |
+| Public API, error, observability and test rules | `docs/STANDARD.md` |
 | The authoritative design decisions and their rationale | `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` |
 | Branching and commit conventions | `docs/GIT_FLOW.md` |
 
@@ -28,7 +28,9 @@ Android API 24+, and iOS 15.0+. Treat those floors as compatibility contracts.
   management, persistence, native code, or mutable global state.
 - Keep consumers on the public barrels; `lib/src/` is implementation detail.
 - Route requests through `SdkRequestExecutor` and preserve the central failure
-  mapping, timeout, cancellation, authentication, and redaction guarantees.
+  mapping, timeout, cancellation, authentication, and safe structured event
+  boundary. Events must not contain or render credentials, URI/path/query,
+  headers, bodies, raw exceptions, or stack traces.
 - Prefer the smallest complete change and preserve existing conventions.
 
 ## AI Workflow

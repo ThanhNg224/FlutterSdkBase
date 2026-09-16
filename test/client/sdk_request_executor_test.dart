@@ -209,6 +209,26 @@ void main() {
       expect(await _execute<String>(executor, decode: (body) => body), '{"status":"ok"}');
     });
 
+    test('swallows observer exceptions on failure and preserves cleanup', () async {
+      final transport = FakeSdkHttpTransport()
+        ..enqueueError(Exception('socket failed'))
+        ..enqueueJson('{"status":"ok"}');
+      final executor = SdkRequestExecutor(
+        config: _config(),
+        transport: transport,
+        observer: ThrowingSdkObserver(),
+      );
+
+      final SdkException error = await _captureSdkException(() => _execute<String>(executor));
+
+      expect(error.failure.code, SdkErrorCodes.transport);
+      expect(error.failure.cause, isNotNull);
+      expect(await _execute<String>(executor, decode: (body) => body), '{"status":"ok"}');
+
+      await executor.close();
+      expect(transport.isClosed, isTrue);
+    });
+
     test('adds version and request ID without mutating request headers', () async {
       final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
       final executor = SdkRequestExecutor(
