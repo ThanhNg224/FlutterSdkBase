@@ -15,9 +15,7 @@ final appConfigProvider = AppConfigProvider._();
 
 /// Provides the immutable configuration for the reference host.
 
-final class AppConfigProvider
-    extends $FunctionalProvider<AppConfig, AppConfig, AppConfig>
-    with $Provider<AppConfig> {
+final class AppConfigProvider extends $FunctionalProvider<AppConfig, AppConfig, AppConfig> with $Provider<AppConfig> {
   /// Provides the immutable configuration for the reference host.
   AppConfigProvider._()
     : super(
@@ -35,8 +33,7 @@ final class AppConfigProvider
 
   @$internal
   @override
-  $ProviderElement<AppConfig> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<AppConfig> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   AppConfig create(Ref ref) {
@@ -62,12 +59,7 @@ final demoHealthScenarioProvider = DemoHealthScenarioProvider._();
 /// Provides the response scenario used by the offline demo transport.
 
 final class DemoHealthScenarioProvider
-    extends
-        $FunctionalProvider<
-          DemoHealthScenario,
-          DemoHealthScenario,
-          DemoHealthScenario
-        >
+    extends $FunctionalProvider<DemoHealthScenario, DemoHealthScenario, DemoHealthScenario>
     with $Provider<DemoHealthScenario> {
   /// Provides the response scenario used by the offline demo transport.
   DemoHealthScenarioProvider._()
@@ -104,8 +96,7 @@ final class DemoHealthScenarioProvider
   }
 }
 
-String _$demoHealthScenarioHash() =>
-    r'3e3cc786a359f5709e13562c22c9d423956e60ce';
+String _$demoHealthScenarioHash() => r'3e3cc786a359f5709e13562c22c9d423956e60ce';
 
 /// Provides the host-only adapter around the SDK's testing transport.
 
@@ -115,12 +106,7 @@ final demoTransportProvider = DemoTransportProvider._();
 /// Provides the host-only adapter around the SDK's testing transport.
 
 final class DemoTransportProvider
-    extends
-        $FunctionalProvider<
-          DemoSdkHttpTransport,
-          DemoSdkHttpTransport,
-          DemoSdkHttpTransport
-        >
+    extends $FunctionalProvider<DemoSdkHttpTransport, DemoSdkHttpTransport, DemoSdkHttpTransport>
     with $Provider<DemoSdkHttpTransport> {
   /// Provides the host-only adapter around the SDK's testing transport.
   DemoTransportProvider._()
@@ -166,9 +152,7 @@ final sdkClientProvider = SdkClientProvider._();
 
 /// Provides and owns the SDK client used by the host.
 
-final class SdkClientProvider
-    extends $FunctionalProvider<SdkClient, SdkClient, SdkClient>
-    with $Provider<SdkClient> {
+final class SdkClientProvider extends $FunctionalProvider<SdkClient, SdkClient, SdkClient> with $Provider<SdkClient> {
   /// Provides and owns the SDK client used by the host.
   SdkClientProvider._()
     : super(
@@ -186,8 +170,7 @@ final class SdkClientProvider
 
   @$internal
   @override
-  $ProviderElement<SdkClient> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<SdkClient> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   SdkClient create(Ref ref) {
