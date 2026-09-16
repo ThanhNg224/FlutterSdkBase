@@ -29,7 +29,7 @@
 
 - Silent by default. The host may inject an `SdkObserver` or get no events.
 - The executor emits exactly one terminal `SdkOperationEvent` per public
-  operation, including operation ID, request ID, SDK version, outcome, elapsed
+  operation, including static operation name, request ID, SDK version, outcome, elapsed
   time, response status when available, and failure code/retry advice.
 - Success events have null `failureCode` and `isRetryable`; failure events have
   both. Observer exceptions are swallowed.
@@ -53,6 +53,13 @@
 - `make verify` — format, analyze, boundary, test.
 - `make ci` — the CI-equivalent local gate: `pub get`, verify, Dartdoc link
   validation, Pana, and the publish dry-run.
+- `make packaged-example PLATFORM=android` — the committed-`HEAD` artifact
+  consumer gate. It creates separate SDK and example snapshots with
+  `git archive`, validates literal top-level `.pubignore` exclusions, rewrites
+  only the staged path dependency, proves package resolution has no checkout
+  path, regenerates and checks example source drift, then analyzes, tests, and
+  builds the staged Android consumer. Use `PLATFORM=ios` for the corresponding
+  local iOS build when the platform toolchain is available.
 - `make doc` — generate API documentation with link validation and fail on
   unresolved links.
 - `./tool/check_boundaries.sh` — layering rules.
@@ -67,3 +74,8 @@
   platform metadata regressions must be fixed before publication rather than
   accepted as a lower package score. Pana is a CI tool, not a package
   dependency.
+- A release is not ready on `make ci` alone. Commit the intended release files,
+  run `make ci` and `make packaged-example PLATFORM=android`, then require the
+  GitHub staged packaged-consumer matrix for Android and iOS. The packaged gate
+  intentionally observes committed `HEAD`, not uncommitted working-tree
+  changes.

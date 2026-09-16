@@ -60,6 +60,20 @@ try {
 }
 ```
 
+## Observability
+
+The SDK is silent by default. A host may provide an `SdkObserver` to receive
+one terminal `SdkOperationEvent` per SDK operation. Events contain only the
+static operation name, request ID, SDK version, elapsed duration, outcome,
+response status when available, failure code, and retryability. They never
+contain credentials, URI details, headers, request or response bodies, raw
+errors, stack traces, or `SdkFailure.cause`.
+
+The host owns telemetry, error-reporting policy, and user-facing error copy.
+The base example supplies only a vendor-neutral adapter boundary; a
+production host can replace it with its own reporting integration. Observer
+exceptions are isolated by the SDK and cannot change an operation's result.
+
 ## Errors
 
 Operations throw `SdkException`, which carries an `SdkFailure`. Branch on
@@ -101,9 +115,26 @@ final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
 final sdk = SdkClient(config: config, transport: transport);
 ```
 
+The packaged consumer gate is separate from source-tree testing:
+
+```sh
+make verify
+make ci
+make packaged-example PLATFORM=android
+```
+
+`make packaged-example` archives `HEAD`, stages the SDK and the example in
+separate temporary directories, and verifies the consumer resolves the staged
+SDK rather than this checkout before analyzing, testing, and building it. It
+therefore tests the committed artifact; commit the files intended for the
+gate first. The release CI matrix runs the same staged flow for Android and
+iOS. These commands prove static/build and packaged-consumer readiness, not
+device or runtime behavior.
+
 ## Compatibility
 
-Semantic versioning. Only `flutter_sdk_base.dart` and
-`flutter_sdk_base_testing.dart` are supported API; `src/` is not. Adding an API
-or an error code is non-breaking; removing or changing either, or raising a
-support floor, is breaking. Deprecations last at least one minor release.
+Only `flutter_sdk_base.dart` and `flutter_sdk_base_testing.dart` are supported
+API; `src/` is not. This base is pre-1.0 and under active development, so
+public APIs and error codes may change between releases when that improves the
+long-term design. The support floors in the matrix remain explicit contracts;
+changes to them are documented in the changelog and release notes.
