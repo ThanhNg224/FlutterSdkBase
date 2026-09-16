@@ -5,7 +5,9 @@
 - Initial public API: `SdkClient`, `SdkConfig`, `SdkHealthService`, `SdkHealth`.
 - Injectable `SdkHttpTransport` with an internal `package:http` default.
 - Typed failures via `SdkException` / `SdkFailure` / `SdkErrorCodes`.
-- Silent-by-default `SdkLogger`; the API key is redacted in every record.
+- Replaced `SdkLogger`, `SdkLogLevel`, and redaction APIs with silent-by-default
+  structured `SdkObserver` operation events. Events contain only safe outcome,
+  timing, correlation, status, and retry metadata.
 - `FakeSdkHttpTransport` in `flutter_sdk_base_testing.dart`.
 - Added SDK-owned per-operation cancellation through `SdkCancelToken`; reuse a
   token deliberately to cancel a group of in-flight operations.

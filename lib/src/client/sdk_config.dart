@@ -15,7 +15,8 @@ final class SdkConfig {
 
   /// The credential sent with every request.
   ///
-  /// The SDK redacts this in every record it hands to an `SdkLogger`.
+  /// This value is sent as an authentication header and is never included in
+  /// an `SdkOperationEvent`.
   final String apiKey;
 
   /// How long a single operation may run before it fails with

@@ -6,7 +6,6 @@ import 'package:flutter_sdk_base/src/client/sdk_request_executor.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_error_codes.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_exception.dart';
 import 'package:flutter_sdk_base/src/errors/sdk_failure.dart';
-import 'package:flutter_sdk_base/src/errors/sdk_status_mapping.dart';
 import 'package:flutter_sdk_base/src/health/sdk_health.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_request.dart';
 import 'package:flutter_sdk_base/src/transport/sdk_http_response.dart';
@@ -39,20 +38,19 @@ final class SdkHealthService {
   /// receive or process the request. Throws [SdkException] for runtime
   /// failures.
   Future<SdkHealth> check({SdkCancelToken? cancelToken}) async {
-    final SdkRequestResult result = await _executor.send(
-      SdkHttpRequest(
+    return _executor.execute<SdkHealth>(
+      operation: 'health.check',
+      request: SdkHttpRequest(
         method: 'GET',
         uri: SdkUri.join(_config.baseUri, 'health'),
         headers: _executor.authHeaders(),
       ),
       cancelToken: cancelToken,
+      decode: _decodeResponse,
     );
-    final SdkHttpResponse response = result.response;
+  }
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw SdkException(failureForStatus(response.statusCode, requestId: result.requestId));
-    }
-
+  SdkHealth _decodeResponse(SdkHttpResponse response, String requestId) {
     final Object? decoded = _decode(response.bodyAsString);
     if (decoded is! Map<String, Object?>) {
       throw SdkException(
@@ -60,7 +58,8 @@ final class SdkHealthService {
           code: SdkErrorCodes.invalidResponse,
           message: 'The health endpoint did not return a JSON object.',
           isRetryable: false,
-          requestId: result.requestId,
+          statusCode: response.statusCode,
+          requestId: requestId,
         ),
       );
     }
@@ -72,7 +71,8 @@ final class SdkHealthService {
           code: SdkErrorCodes.invalidResponse,
           message: 'The health response did not contain a string "status" field.',
           isRetryable: false,
-          requestId: result.requestId,
+          statusCode: response.statusCode,
+          requestId: requestId,
         ),
       );
     }

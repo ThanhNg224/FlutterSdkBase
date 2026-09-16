@@ -25,11 +25,17 @@
   mappings for timeout, transport, and cancellation failures.
 - `SdkFailure.toString()` never renders `cause`.
 
-## Logging
+## Observability
 
-- Silent by default. The host injects an `SdkLogger` or gets nothing.
-- `SdkConfig.apiKey` never appears verbatim in a record. Use `SdkRedaction`.
-- Never log headers or bodies.
+- Silent by default. The host may inject an `SdkObserver` or get no events.
+- The executor emits exactly one terminal `SdkOperationEvent` per public
+  operation, including operation ID, request ID, SDK version, outcome, elapsed
+  time, response status when available, and failure code/retry advice.
+- Success events have null `failureCode` and `isRetryable`; failure events have
+  both. Observer exceptions are swallowed.
+- Events never contain or render API keys, URI/path/query, headers, bodies, raw
+  exceptions, or stack traces. `SdkFailure.cause` remains only on the thrown
+  failure.
 
 ## Tests
 

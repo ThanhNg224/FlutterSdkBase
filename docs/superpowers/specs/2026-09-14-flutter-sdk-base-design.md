@@ -7,7 +7,7 @@
 1. **Cancellation is best-effort and says so.** The draft promised prompt cancellation that `package:http` cannot deliver (§6).
 2. **Platform floors are derived, not picked.** The draft's Android API 21 and iOS 14.0 matched neither Flutter 3.47 nor the repo; the real values are 24 and 15.0 (§2).
 3. **Error taxonomy covers non-429 4xx.** The draft had no code for 401/403/404, so they would have collapsed into `server` (§5).
-4. **The reference slice authenticates.** The draft retained redaction while carrying no credential, leaving it dead code; `SdkConfig.apiKey` makes it a tested invariant (§1, §4, §5).
+4. **The reference slice authenticates safely.** The draft carried no credential; `SdkConfig.apiKey` makes the event-safety invariant testable (§1, §4, §5).
 5. `SdkHttpTransport` gained `close()` — the client owns the transport and had no way to release it (§6).
 6. `example/` is generated fresh, never migrated, and owns the `implementation_imports` lint (§8, §9, §10).
 7. The artifact-consumer gate uses an extracted archive instead of a temporary Git dependency (§10).
@@ -44,8 +44,8 @@ await sdk.close();
 
 - A Flutter package that may import `package:flutter/foundation.dart` only from Flutter.
 - A public, instance-based client with a built-in HTTP implementation hidden behind SDK-owned transport value types.
-- Host-supplied API-key authentication applied to every request, with the key redacted in every log line the SDK emits.
-- Safe logging, typed failures wrapped in exceptions, best-effort cancellation, timeout, multiple concurrent client instances, a fake transport, and a consumer example.
+- Host-supplied API-key authentication applied to every request, with safe structured operation events that never contain the key.
+- Silent-by-default operation observation, typed failures wrapped in exceptions, best-effort cancellation, timeout, multiple concurrent client instances, a fake transport, and a consumer example.
 - Android and iOS support for the package's v1 release.
 
 ### Explicitly out of scope
@@ -122,10 +122,8 @@ lib/
     │   ├── sdk_failure.dart
     │   └── sdk_status_mapping.dart
     ├── logging/
-    │   ├── sdk_log_level.dart
-    │   ├── sdk_logger.dart
-    │   ├── sdk_redaction.dart
-    │   └── silent_sdk_logger.dart
+    │   ├── sdk_observer.dart
+    │   └── sdk_operation_event.dart
     └── util/
         └── sdk_uri.dart
 example/                              # independent Flutter host app
@@ -133,7 +131,7 @@ test/
 docs/
 ```
 
-`flutter_sdk_base.dart` exports `SdkClient`, `SdkCancelToken`, `SdkConfig`, `SdkHealthService`, `SdkHealth`, `SdkHttpTransport`, `SdkHttpCall`, `SdkHttpRequest`, `SdkHttpResponse`, `SdkLogger`, `SdkLogLevel`, `SdkFailure`, `SdkException`, `SdkErrorCodes`, and the `sdkVersion` constant. The testing barrel exports `FakeSdkHttpTransport` only. Its deterministic behaviour is configured through that class's own methods; no separate handler type is exported.
+`flutter_sdk_base.dart` exports `SdkClient`, `SdkCancelToken`, `SdkConfig`, `SdkHealthService`, `SdkHealth`, `SdkHttpTransport`, `SdkHttpCall`, `SdkHttpRequest`, `SdkHttpResponse`, `SdkObserver`, `SdkOperationEvent`, `SdkOperationOutcome`, `SdkFailure`, `SdkException`, `SdkErrorCodes`, and the `sdkVersion` constant. The testing barrel exports `FakeSdkHttpTransport` only. Its deterministic behaviour is configured through that class's own methods; no separate handler type is exported.
 
 `lib/src/` may import `package:flutter/foundation.dart` for `kDebugMode`, `debugPrint`, and `@visibleForTesting`. It must not import `package:flutter/material.dart`, `package:flutter/widgets.dart`, or `package:flutter/services.dart`.
 
@@ -146,7 +144,7 @@ final class SdkClient {
   SdkClient({
     required SdkConfig config,
     SdkHttpTransport? transport,
-    SdkLogger? logger,
+    SdkObserver? observer,
   });
 
   SdkHealthService get health;
@@ -284,19 +282,41 @@ safe to render. A manually constructed `SdkFailure` must also supply it so new
 fields do not become an optional compatibility trap later.
 
 ```dart
-abstract interface class SdkLogger {
-  void log(
-    SdkLogLevel level,
-    String message, {
-    Object? error,
-    StackTrace? stackTrace,
+enum SdkOperationOutcome { succeeded, failed }
+
+final class SdkOperationEvent {
+  const SdkOperationEvent({
+    required this.operation,
+    required this.requestId,
+    required this.sdkVersion,
+    required this.outcome,
+    required this.elapsed,
+    this.statusCode,
+    this.failureCode,
+    this.isRetryable,
   });
+
+  final String operation;
+  final String requestId;
+  final String sdkVersion;
+  final SdkOperationOutcome outcome;
+  final Duration elapsed;
+  final int? statusCode;
+  final String? failureCode;
+  final bool? isRetryable;
+}
+
+abstract interface class SdkObserver {
+  void onOperation(SdkOperationEvent event);
 }
 ```
 
-Logging is no-op by default. A host may inject `SdkLogger`; SDK logs must omit credentials, headers, request/response bodies, and other sensitive values before calling it. Existing redaction utilities and silent/debug sink concepts may be reused internally, but `Redacted`, log records, and sinks are not public API.
-
-Because v1 carries a real credential, redaction is a tested invariant rather than a latent utility: `SdkConfig.apiKey` must never appear verbatim in any record passed to an injected `SdkLogger`, and a test asserts this across the success, HTTP-error, timeout, and cancellation paths.
+Operation observation is no-op by default. A host may inject `SdkObserver`; the
+executor emits exactly one terminal `SdkOperationEvent` per public operation.
+Success events have null `failureCode` and `isRetryable`; failures have both.
+The SDK swallows observer exceptions. Events contain only operation metadata,
+and never credentials, URI/path/query, headers, bodies, raw exceptions, or
+stack traces. `SdkFailure.cause` remains only on the thrown failure.
 
 ## 6. HTTP Transport, Timeout, and Lifecycle
 
@@ -359,6 +379,14 @@ invent version or correlation headers. The executor retains that ID for all
 failure paths, including timeout, close, token cancellation, transport errors,
 HTTP status mapping, and invalid successful bodies.
 
+The executor emits exactly one terminal `SdkOperationEvent` for every public
+operation, including pre-cancelled, timed out, transport-failed, HTTP-failed,
+and invalid-response outcomes. A success event has null `failureCode` and
+`isRetryable`; a failure event has both. `statusCode` is present whenever an
+HTTP response existed. Observer exceptions are swallowed, and event fields
+never include credentials, URI/path/query, headers, bodies, raw exceptions, or
+stack traces.
+
 Token cancellation follows the same teardown path as client close for its one
 operation: it invokes `SdkHttpCall.cancel()`, maps the operation to
 `SdkErrorCodes.cancelled`, and discards a late response. It does not call
@@ -393,7 +421,7 @@ The clone is initialized with the existing quick-start script solely to establis
 - Android, iOS, macOS, Windows, Linux, Web, branding assets, flavor configuration, application launchers, `init_project.py`, and app deployment workflows are **deleted** from the package root. The new `example/`, generated by `flutter create`, becomes the only Flutter application and owns freshly generated platform folders at the derived floors. Nothing is moved; the inherited platform folders carry stale deployment targets and flavor wiring.
 - `flutter_riverpod`, `riverpod_annotation`, `go_router`, `dio`, `fpdart`, `freezed`, `json_serializable`, storage/connectivity plugins, fonts, animation, launcher icon, splash, localization, and their generators are removed unless a later public SDK requirement proves one is necessary.
 
-The retained ideas are strict analysis, focused tests, release-safe logging/redaction, error mapping, documentation discipline, and CI. The following existing code is candidate source material only and must be adapted behind the new contracts: `lib/core/logging/`, `lib/core/errors/`, `lib/core/utils/redaction.dart`, and the current network tests. No app-specific type crosses the new public boundary.
+The retained ideas are strict analysis, focused tests, safe operation observation, error mapping, documentation discipline, and CI. The following existing code is candidate source material only and must be adapted behind the new contracts: `lib/core/logging/`, `lib/core/errors/`, `lib/core/utils/redaction.dart`, and the current network tests. No app-specific type crosses the new public boundary.
 
 Existing app architecture, standards, core-module, and feature-template documents are replaced during migration with SDK-focused versions. This design document is authoritative for the transition where it conflicts with current app documentation.
 
