@@ -5,9 +5,9 @@ final class AppFailure implements Exception {
   /// Creates a host failure.
   const AppFailure({
     required this.code,
-    required this.message,
     required this.isRetryable,
     required this.requestId,
+    this.statusCode,
   });
 
   /// Creates a host failure from an SDK exception.
@@ -16,16 +16,13 @@ final class AppFailure implements Exception {
   /// Creates a host failure from an SDK failure.
   factory AppFailure.fromSdkFailure(SdkFailure failure) => AppFailure(
     code: failure.code,
-    message: failure.message,
     isRetryable: failure.isRetryable,
     requestId: failure.requestId,
+    statusCode: failure.statusCode,
   );
 
   /// The stable SDK error code.
   final String code;
-
-  /// Diagnostic text supplied by the SDK.
-  final String message;
 
   /// Whether retrying could plausibly succeed.
   final bool isRetryable;
@@ -33,6 +30,9 @@ final class AppFailure implements Exception {
   /// The SDK request correlation ID.
   final String requestId;
 
+  /// The HTTP status that produced this failure, when there was one.
+  final int? statusCode;
+
   @override
-  String toString() => 'AppFailure($code): $message';
+  String toString() => 'AppFailure($code, status: $statusCode)';
 }
