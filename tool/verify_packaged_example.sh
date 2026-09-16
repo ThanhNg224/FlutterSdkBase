@@ -34,6 +34,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 archive="$tmp_root/repository.tar"
+consumer_archive="$tmp_root/example.tar"
 sdk_stage="$tmp_root/sdk"
 consumer_stage="$tmp_root/consumer"
 consumer_reference="$tmp_root/consumer-reference"
@@ -41,15 +42,16 @@ mkdir -p "$sdk_stage" "$consumer_stage" "$consumer_reference"
 
 printf '%s\n' 'Creating SDK and consumer inputs from git archive HEAD.'
 git -C "$repo_root" archive --format=tar HEAD > "$archive" || fail 'git archive HEAD failed'
+git -C "$repo_root" archive --format=tar HEAD example > "$consumer_archive" || fail 'git archive HEAD example failed'
 tar -xf "$archive" -C "$sdk_stage"
-tar -xf "$archive" -C "$consumer_stage"
-tar -xf "$archive" -C "$consumer_reference"
+tar -xf "$consumer_archive" -C "$consumer_stage" --strip-components=1
+tar -xf "$consumer_archive" -C "$consumer_reference" --strip-components=1
 
 test -f "$sdk_stage/.pubignore" || fail 'archived .pubignore is missing'
 test -f "$sdk_stage/pubspec.yaml" || fail 'archived SDK pubspec.yaml is missing'
-test -f "$consumer_stage/example/pubspec.yaml" || fail 'archived example pubspec.yaml is missing'
-test -d "$consumer_stage/example/lib" || fail 'archived example lib/ is missing'
-test -d "$consumer_reference/example/lib" || fail 'archived example reference lib/ is missing'
+test -f "$consumer_stage/pubspec.yaml" || fail 'archived example pubspec.yaml is missing'
+test -d "$consumer_stage/lib" || fail 'archived example lib/ is missing'
+test -d "$consumer_reference/lib" || fail 'archived example reference lib/ is missing'
 
 validate_pubignore() {
   pubignore=$1
@@ -99,8 +101,8 @@ test -f "$sdk_stage/lib/flutter_sdk_base.dart" || fail 'publishable SDK snapshot
 test ! -e "$sdk_stage/docs" || fail 'publishable SDK snapshot still contains docs/'
 test ! -e "$sdk_stage/tool" || fail 'publishable SDK snapshot still contains tool/'
 
-consumer="$consumer_stage/example"
-reference="$consumer_reference/example"
+consumer=$consumer_stage
+reference=$consumer_reference
 pubspec="$consumer/pubspec.yaml"
 staged_pubspec="$tmp_root/pubspec.yaml"
 
