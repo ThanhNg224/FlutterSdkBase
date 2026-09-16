@@ -15,7 +15,9 @@ final appConfigProvider = AppConfigProvider._();
 
 /// Provides the immutable configuration for the reference host.
 
-final class AppConfigProvider extends $FunctionalProvider<AppConfig, AppConfig, AppConfig> with $Provider<AppConfig> {
+final class AppConfigProvider
+    extends $FunctionalProvider<AppConfig, AppConfig, AppConfig>
+    with $Provider<AppConfig> {
   /// Provides the immutable configuration for the reference host.
   AppConfigProvider._()
     : super(
@@ -33,7 +35,8 @@ final class AppConfigProvider extends $FunctionalProvider<AppConfig, AppConfig, 
 
   @$internal
   @override
-  $ProviderElement<AppConfig> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<AppConfig> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   AppConfig create(Ref ref) {
@@ -59,7 +62,12 @@ final demoHealthScenarioProvider = DemoHealthScenarioProvider._();
 /// Provides the response scenario used by the offline demo transport.
 
 final class DemoHealthScenarioProvider
-    extends $FunctionalProvider<DemoHealthScenario, DemoHealthScenario, DemoHealthScenario>
+    extends
+        $FunctionalProvider<
+          DemoHealthScenario,
+          DemoHealthScenario,
+          DemoHealthScenario
+        >
     with $Provider<DemoHealthScenario> {
   /// Provides the response scenario used by the offline demo transport.
   DemoHealthScenarioProvider._()
@@ -96,7 +104,8 @@ final class DemoHealthScenarioProvider
   }
 }
 
-String _$demoHealthScenarioHash() => r'3e3cc786a359f5709e13562c22c9d423956e60ce';
+String _$demoHealthScenarioHash() =>
+    r'3e3cc786a359f5709e13562c22c9d423956e60ce';
 
 /// Provides the host-only adapter around the SDK's testing transport.
 
@@ -106,7 +115,12 @@ final demoTransportProvider = DemoTransportProvider._();
 /// Provides the host-only adapter around the SDK's testing transport.
 
 final class DemoTransportProvider
-    extends $FunctionalProvider<DemoSdkHttpTransport, DemoSdkHttpTransport, DemoSdkHttpTransport>
+    extends
+        $FunctionalProvider<
+          DemoSdkHttpTransport,
+          DemoSdkHttpTransport,
+          DemoSdkHttpTransport
+        >
     with $Provider<DemoSdkHttpTransport> {
   /// Provides the host-only adapter around the SDK's testing transport.
   DemoTransportProvider._()
@@ -152,7 +166,13 @@ final appObservabilityProvider = AppObservabilityProvider._();
 
 /// Provides the host observability sink. Release builds are silent by default.
 
-final class AppObservabilityProvider extends $FunctionalProvider<AppObservability, AppObservability, AppObservability>
+final class AppObservabilityProvider
+    extends
+        $FunctionalProvider<
+          AppObservability,
+          AppObservability,
+          AppObservability
+        >
     with $Provider<AppObservability> {
   /// Provides the host observability sink. Release builds are silent by default.
   AppObservabilityProvider._()
@@ -171,7 +191,8 @@ final class AppObservabilityProvider extends $FunctionalProvider<AppObservabilit
 
   @$internal
   @override
-  $ProviderElement<AppObservability> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<AppObservability> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   AppObservability create(Ref ref) {
@@ -196,7 +217,8 @@ final sdkObserverProvider = SdkObserverProvider._();
 
 /// Provides the adapter that passes safe SDK events to host observability.
 
-final class SdkObserverProvider extends $FunctionalProvider<SdkObserver, SdkObserver, SdkObserver>
+final class SdkObserverProvider
+    extends $FunctionalProvider<SdkObserver, SdkObserver, SdkObserver>
     with $Provider<SdkObserver> {
   /// Provides the adapter that passes safe SDK events to host observability.
   SdkObserverProvider._()
@@ -215,7 +237,8 @@ final class SdkObserverProvider extends $FunctionalProvider<SdkObserver, SdkObse
 
   @$internal
   @override
-  $ProviderElement<SdkObserver> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SdkObserver> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   SdkObserver create(Ref ref) {
@@ -240,7 +263,13 @@ final appErrorReporterProvider = AppErrorReporterProvider._();
 
 /// Provides the reporter used by host repositories for mapped SDK failures.
 
-final class AppErrorReporterProvider extends $FunctionalProvider<AppErrorReporter, AppErrorReporter, AppErrorReporter>
+final class AppErrorReporterProvider
+    extends
+        $FunctionalProvider<
+          AppErrorReporter,
+          AppErrorReporter,
+          AppErrorReporter
+        >
     with $Provider<AppErrorReporter> {
   /// Provides the reporter used by host repositories for mapped SDK failures.
   AppErrorReporterProvider._()
@@ -259,7 +288,8 @@ final class AppErrorReporterProvider extends $FunctionalProvider<AppErrorReporte
 
   @$internal
   @override
-  $ProviderElement<AppErrorReporter> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<AppErrorReporter> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   AppErrorReporter create(Ref ref) {
@@ -284,7 +314,9 @@ final sdkClientProvider = SdkClientProvider._();
 
 /// Provides and owns the SDK client used by the host.
 
-final class SdkClientProvider extends $FunctionalProvider<SdkClient, SdkClient, SdkClient> with $Provider<SdkClient> {
+final class SdkClientProvider
+    extends $FunctionalProvider<SdkClient, SdkClient, SdkClient>
+    with $Provider<SdkClient> {
   /// Provides and owns the SDK client used by the host.
   SdkClientProvider._()
     : super(
@@ -302,7 +334,8 @@ final class SdkClientProvider extends $FunctionalProvider<SdkClient, SdkClient, 
 
   @$internal
   @override
-  $ProviderElement<SdkClient> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SdkClient> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   SdkClient create(Ref ref) {
