@@ -13,7 +13,8 @@ help: ## Show available commands
 clean: ## Remove build artifacts and temporary files
 	$(FLUTTER) clean
 	@rm -rf build doc/api .dart_tool
-	@if [ -d "example" ]; then cd example && $(FLUTTER) clean && rm -rf build .dart_tool; fi
+	@if [ -d "example" ]; then cd example && $(FLUTTER) clean && rm -rf build .dart_tool android/.gradle; fi
+
 
 pub-get: ## Resolve package dependencies
 

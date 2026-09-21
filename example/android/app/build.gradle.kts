@@ -30,6 +30,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Supports real physical devices, Apple Silicon Mac emulators (arm64-v8a), and Windows/Intel PC emulators (x86_64).
+            // Excludes legacy 32-bit armeabi-v7a to eliminate ~400MB of unused intermediate libraries and speed up builds.
+            ndk {
+                abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
+            }
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
