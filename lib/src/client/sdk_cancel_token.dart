@@ -7,6 +7,9 @@ import 'package:meta/meta.dart';
 /// normally create one token per operation; deliberately reusing a token groups
 /// those operations under one cancellation request.
 final class SdkCancelToken {
+  /// Creates a token that can cancel one or more SDK operations.
+  SdkCancelToken();
+
   final List<void Function()> _listeners = <void Function()>[];
   bool _isCancelled = false;
 

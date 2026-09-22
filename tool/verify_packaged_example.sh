@@ -25,6 +25,8 @@ case "$platform" in
     ;;
 esac
 
+android_target_platforms=android-arm64,android-x64
+
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || fail 'must run inside a Git repository'
 
 tmp_root=$(mktemp -d "${TMPDIR:-/tmp}/flutter-sdk-base-packaged.XXXXXX")
@@ -201,7 +203,7 @@ case "$platform" in
     printf '%s\n' 'Building staged Android consumer (debug, no device claim).'
     (
       cd "$consumer"
-      flutter build apk --debug
+      flutter build apk --debug --target-platform "$android_target_platforms"
     )
     ;;
   ios)

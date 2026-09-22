@@ -15,31 +15,22 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.flutter_sdk_base_example"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
-        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-        // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         debug {
-            // Supports real physical devices, Apple Silicon Mac emulators (arm64-v8a), and Windows/Intel PC emulators (x86_64).
-            // Excludes legacy 32-bit armeabi-v7a to eliminate ~400MB of unused intermediate libraries and speed up builds.
+            // Keep debug artifacts focused on common 64-bit devices and emulators.
             ndk {
                 abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
             }
         }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // The example is not a production app; use proper signing in a host app.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
