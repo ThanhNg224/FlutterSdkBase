@@ -10,10 +10,15 @@ Health flow does not need a backend or a real API key.
 From the repository root:
 
 ```sh
-make example-verify
+make example-build
 cd example
-flutter run
+flutter run --target-platform android-arm64,android-x64
 ```
+
+The Android example intentionally targets the common 64-bit device and
+emulator ABIs to keep debug builds smaller and faster. Override
+`EXAMPLE_ANDROID_TARGET_PLATFORMS` and the debug `abiFilters` in
+`android/app/build.gradle.kts` when testing another ABI.
 
 When provider annotations change, regenerate the committed outputs with:
 
