@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ matrix.flutter }}
+          flutter-version: ${{ matrix.flutter != 'stable' && matrix.flutter || '' }}
           channel: stable
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
@@ -45,7 +45,7 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ matrix.flutter }}
+          flutter-version: ${{ matrix.flutter != 'stable' && matrix.flutter || '' }}
           channel: stable
       - run: make packaged-example PLATFORM=android
 
@@ -61,6 +61,6 @@ jobs:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ matrix.flutter }}
+          flutter-version: ${{ matrix.flutter != 'stable' && matrix.flutter || '' }}
           channel: stable
       - run: make packaged-example PLATFORM=ios
