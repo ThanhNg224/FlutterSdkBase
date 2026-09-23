@@ -16,6 +16,7 @@ ehthumbs.db
 
 # AI Agent tooling
 .superpowers/
+docs/superpowers/plans/
 
 # Environment & Secrets
 *.env
