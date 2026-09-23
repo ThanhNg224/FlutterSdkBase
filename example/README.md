@@ -12,13 +12,15 @@ From the repository root:
 ```sh
 make example-build
 cd example
-flutter run --target-platform android-arm64,android-x64
+flutter run --target-platform android-arm64
 ```
 
-The Android example intentionally targets the common 64-bit device and
-emulator ABIs to keep debug builds smaller and faster. Override
-`EXAMPLE_ANDROID_TARGET_PLATFORMS` and the debug `abiFilters` in
-`android/app/build.gradle.kts` when testing another ABI.
+Build only for the ABI of the device being used. The default is `android-arm64`
+for a physical Android device. For an x86_64 emulator, use
+`make example-build EXAMPLE_ANDROID_TARGET_PLATFORMS=android-x64` and run with
+`flutter run --target-platform android-x64`. The Gradle `abiFilters` list the
+ABIs the host permits; Flutter's target-platform option selects which ABI is
+built.
 
 When provider annotations change, regenerate the committed outputs with:
 

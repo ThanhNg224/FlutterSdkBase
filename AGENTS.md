@@ -1,53 +1,37 @@
-# AGENTS.md
+# Agent guidance
 
-## Mission
+## Source of truth
 
-This document defines how AI assistants and developers contribute to
-`flutter_sdk_base`. Contributions must preserve the package boundary, the
-explicit public barrels, the single request path, and the support policy in the
-approved design.
+- This file defines contribution workflow and package-wide invariants.
+- `docs/ARCHITECTURE.md`: layers, request path, and capability changes.
+- `docs/STANDARD.md`: public API, errors, observability, and tests.
+- `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md`: approved design decisions.
+- `docs/GIT_FLOW.md`: branches, commits, and release flow.
+- `docs/AGENTS.md`: rules for editing documentation.
 
-## Engineering Documents
+Read only the document relevant to the requested change. Keep a rule in one
+authoritative place and link to it elsewhere instead of copying it.
 
-Read the relevant engineering document before implementing a change:
+## Package invariants
 
-| Read this for... | File |
-| --- | --- |
-| Layer boundaries, the request path, adding a capability | `docs/ARCHITECTURE.md` |
-| Public API, error, observability and test rules | `docs/STANDARD.md` |
-| The authoritative design decisions and their rationale | `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md` |
-| Branching and commit conventions | `docs/GIT_FLOW.md` |
+- Treat Dart `>=3.13.0 <4.0.0`, Flutter `>=3.47.0`, Android API 24+, and iOS
+  15.0+ as support contracts.
+- Keep host UI, routing, state management, persistence, native code, and
+  mutable global state out of `lib/src/`.
+- Consumers use the explicit public barrels; `lib/src/` is implementation
+  detail.
+- Route requests through `SdkRequestExecutor`. Preserve central error mapping,
+  timeout, cancellation, authentication, and safe structured events. Events
+  must not contain credentials, URI/path/query, headers, bodies, raw exceptions,
+  or stack traces.
 
-The approved design declares Dart `>=3.13.0 <4.0.0`, Flutter `>=3.47.0`,
-Android API 24+, and iOS 15.0+. Treat those floors as compatibility contracts.
+## Build and verification
 
-## Core Engineering Principles
-
-- Understand the existing code and relevant documents before implementing.
-- Keep host concerns out of `lib/src/`; do not add UI, routing, state
-  management, persistence, native code, or mutable global state.
-- Keep consumers on the public barrels; `lib/src/` is implementation detail.
-- Route requests through `SdkRequestExecutor` and preserve the central failure
-  mapping, timeout, cancellation, authentication, and safe structured event
-  boundary. Events must not contain or render credentials, URI/path/query,
-  headers, bodies, raw exceptions, or stack traces.
-- Prefer the smallest complete change and preserve existing conventions.
-
-## AI Workflow
-
-For every request:
-
-1. Understand the requested behavior and inspect the relevant implementation.
-2. Read the applicable engineering documents and approved design decisions.
-3. Implement the smallest complete solution within the package boundary.
-4. Run `make verify` and inspect the diff before presenting results.
-5. For release or CI changes, run the corresponding `make ci` and boundary gates.
-
-## Commands
-
-- **Rename the package (do this first in a fresh clone):** `make rename NAME=my_company_sdk`
-- **Analyze:** `make analyze` (must report 0 issues)
-- **Test:** `make test`
-- **Full local gate:** `make verify`
-- **CI-equivalent:** `make ci`
-- **Single test:** `flutter test test/path/to/test_file.dart`
+- Build the example for only the ABI of the device being used. The default is
+  `android-arm64`; use `android-x64` only for an x86_64 emulator. Set
+  `EXAMPLE_ANDROID_TARGET_PLATFORMS` when building for that emulator.
+- Use `make clean` to remove generated build outputs and local project caches;
+  later builds recreate them.
+- For source changes, run `make verify` and inspect the diff. Run `make ci` for
+  CI or release-facing changes. For documentation-only changes, verify the
+  diff and affected links without running unrelated gates.

@@ -2,7 +2,8 @@ SHELL := /bin/sh
 
 FLUTTER ?= flutter
 DART ?= dart
-EXAMPLE_ANDROID_TARGET_PLATFORMS ?= android-arm64,android-x64
+# Build one device ABI by default; override for an x86_64 emulator.
+EXAMPLE_ANDROID_TARGET_PLATFORMS ?= android-arm64
 
 .DEFAULT_GOAL := help
 
