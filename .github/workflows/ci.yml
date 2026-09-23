@@ -27,8 +27,6 @@ jobs:
       - run: dart pub global run pana . --exit-code-threshold 0
       - run: ./tool/check_boundaries.sh
       - run: flutter test
-      - name: Inspect analysis configuration before publish check
-        run: git diff -- analysis_options.yaml example/analysis_options.yaml
       - run: flutter pub publish --dry-run
 
   packaged-example-android:
