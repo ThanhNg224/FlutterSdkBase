@@ -50,9 +50,8 @@
 
 ## Commands
 
-- `make verify` — format, analyze, boundary, test.
-- `make ci` — the CI-equivalent local gate: `pub get`, verify, Dartdoc link
-  validation, Pana, and the publish dry-run.
+Local checks, their preparation side effects, and risk levels are owned by
+[Verification](VERIFICATION.md).
 - `make packaged-example PLATFORM=android` — the committed-`HEAD` artifact
   consumer gate. It creates separate SDK and example snapshots with
   `git archive`, validates literal top-level `.pubignore` exclusions, rewrites
@@ -62,7 +61,6 @@
   local iOS build when the platform toolchain is available.
 - `make doc` — generate API documentation with link validation and fail on
   unresolved links.
-- `./tool/check_boundaries.sh` — layering rules.
 
 ## Release quality
 
@@ -79,3 +77,22 @@
   GitHub staged packaged-consumer matrix for Android and iOS. The packaged gate
   intentionally observes committed `HEAD`, not uncommitted working-tree
   changes.
+
+## Host integration test example
+
+Test your host integration or custom SDK capabilities without making real network calls using the testing barrel:
+
+```dart
+import 'package:flutter_sdk_base/flutter_sdk_base.dart';
+import 'package:flutter_sdk_base/flutter_sdk_base_testing.dart';
+
+final transport = FakeSdkHttpTransport()..enqueueJson('{"status":"ok"}');
+final sdk = SdkClient(config: config, transport: transport);
+
+final health = await sdk.health.check();
+expect(health.status, 'ok');
+```
+
+## Example generation
+
+The SDK package itself has no code generation and must not gain a generator dependency. The independent example host intentionally uses Riverpod Generator. Run `make example-generate` after changing an annotated example provider, and keep generated `example/lib/**/*.g.dart` sources committed and formatted. Local and CI boundary checking use the same `tool/check_boundaries.sh` script.

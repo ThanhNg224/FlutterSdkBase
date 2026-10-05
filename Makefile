@@ -29,7 +29,7 @@ rename: ## Rename the package everywhere; requires NAME=my_company_sdk
 format: ## Format all Dart files
 	$(DART) format .
 
-format-check: example-generate ## Verify formatting without changing files
+format-check: ## Verify formatting without changing files
 	$(DART) format --output=none --set-exit-if-changed .
 
 example-pub-get: ## Resolve example host dependencies
@@ -67,14 +67,12 @@ pana: ## Run Pana with no missing package-quality points
 	$(DART) pub global activate pana
 	$(DART) pub global run pana . --exit-code-threshold 0
 
-boundary: ## Fail if lib/src reaches into Flutter UI or dart:io
-	@! grep -rn "package:flutter/material.dart\|package:flutter/widgets.dart\|package:flutter/services.dart\|dart:io" lib/ \
-	  || (echo "BOUNDARY VIOLATION in lib/"; exit 1)
-	@echo "boundary ok"
+boundary: ## Run the same package/example boundary checker as CI
+	./tool/check_boundaries.sh
 
 publish-check: ## Verify the package would publish cleanly
 	$(FLUTTER) pub publish --dry-run
 
-verify: format-check analyze boundary test example-verify ## Local pre-commit gate
+verify: example-generate format-check analyze boundary test example-verify ## Local pre-commit gate
 
-ci: pub-get verify doc pana publish-check ## CI-equivalent local gate
+ci: pub-get verify doc pana publish-check ## Local package-quality gate

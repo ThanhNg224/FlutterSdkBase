@@ -49,3 +49,88 @@ best-effort and never closes the client; reusing one token deliberately groups
 operations. The executor adds `X-Sdk-Version` and a fresh `X-Request-Id` to
 every outgoing request, and capabilities retain that ID when mapping response
 or parsing failures.
+
+## Installation
+
+Add `flutter_sdk_base` to your host project's `pubspec.yaml`:
+
+```yaml
+dependencies:
+  flutter_sdk_base: ^0.1.0
+```
+
+Consumers access capabilities strictly through public barrel exports (`flutter_sdk_base.dart` and `flutter_sdk_base_testing.dart`); `lib/src/` is an internal implementation detail.
+
+---
+
+## Usage
+
+### Quick Start
+
+Initialize `SdkClient` and execute operations:
+
+```dart
+import 'package:flutter_sdk_base/flutter_sdk_base.dart';
+
+final sdk = SdkClient(
+  config: SdkConfig(
+    baseUri: Uri.parse('https://api.example.com'),
+    apiKey: hostSuppliedKey,
+  ),
+);
+
+try {
+  final health = await sdk.health.check();
+  print('Status: ${health.status}');
+} finally {
+  await sdk.close();
+}
+```
+
+<details>
+<summary><b>Advanced: Error Handling & Cancellation</b></summary>
+
+```dart
+final cancelToken = SdkCancelToken();
+
+try {
+  final health = await sdk.health.check(cancelToken: cancelToken);
+  print(health.status);
+} on SdkException catch (error) {
+  // Branch on typed failure codes; map to host user-facing copy
+  if (error.failure.code == SdkErrorCodes.unauthorized) {
+    // Handle unauthorized access
+  } else if (error.failure.isRetryable) {
+    // Handle transient error based on SDK retry advice
+  }
+} finally {
+  await sdk.close();
+}
+```
+
+- **Cancellation Contract:** Cancellation is **best-effort**. `SdkCancelToken.cancel()` and `close()` instruct the SDK to stop waiting and fail pending operations with `SdkErrorCodes.cancelled`. However, the underlying socket may remain open until the server replies; never treat a cancelled call as proof the server did not process the request.
+- **Client Lifecycle:** `close()` is idempotent, cancels in-flight work, and releases transport resources. Using a client after `close()` throws `StateError`, as this is a programming mistake rather than a runtime failure.
+
+</details>
+
+<details>
+<summary><b>Advanced: Observability & Telemetry</b></summary>
+
+The SDK is silent by default. A host may supply an `SdkObserver` callback to receive terminal operation metrics:
+
+```dart
+final sdk = SdkClient(
+  config: config,
+  observer: (SdkOperationEvent event) {
+    print('${event.operationName} finished in ${event.durationMs}ms (status: ${event.status})');
+  },
+);
+```
+
+- **Safe Structured Events:** Dispatches exactly one terminal event per operation containing only static operation name, request ID, SDK version, duration, outcome, HTTP status, and failure code.
+- **Strict Privacy Guarantee:** Events never contain credentials, URI paths/query parameters, headers, request/response bodies, raw exceptions, stack traces, or diagnostic causes.
+- **Isolation:** Observer exceptions are caught and swallowed by the SDK to guarantee telemetry cannot disrupt host execution.
+
+</details>
+
+---

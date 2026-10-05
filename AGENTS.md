@@ -1,16 +1,26 @@
-# Agent guidance
+# Engineering Guidelines
 
-## Source of truth
+A Flutter SDK package with an independent example host. Its public API and error/security contracts live in [Architecture](docs/ARCHITECTURE.md) and [Standards](docs/STANDARD.md).
 
-- This file defines contribution workflow and package-wide invariants.
-- `docs/ARCHITECTURE.md`: layers, request path, and capability changes.
-- `docs/STANDARD.md`: public API, errors, observability, and tests.
-- `docs/superpowers/specs/2026-09-14-flutter-sdk-base-design.md`: approved design decisions.
-- `docs/GIT_FLOW.md`: branches, commits, and release flow.
-- `docs/AGENTS.md`: rules for editing documentation.
+## Workflow
 
-Read only the document relevant to the requested change. Keep a rule in one
-authoritative place and link to it elsewhere instead of copying it.
+- Read only the owning documents relevant to the task, then inspect current implementation, callers, and existing tests.
+- Make the smallest complete change. Add infrastructure or abstractions only for a concrete requirement or failure mode.
+- Work in the current branch and checkout. Do not create a branch or worktree unless explicitly requested; preserve other contributors' edits.
+- Ask when unresolved intent or a tradeoff changes the work. Continue independent work while waiting.
+- Handle small and tightly coupled changes directly. Delegate only when independent tracks reduce total effort; use a reviewer for high-risk changes or when requested.
+- Use the smallest level in [Verification](docs/VERIFICATION.md). Test behavior, state, persistence, security, and concurrency when affected; do not add tests that merely mirror layout or styling.
+- Report exact commands and results. Keep local checks, archive checks, builds, remote CI, and device evidence distinct.
+- Keep rules in their owning documents and link elsewhere. Preserve active plans and decision records; keep handoff plans local under `docs/plans/` and delete them when completed.
+- Follow [Git workflow](docs/GIT_FLOW.md). Do not commit, push, tag, publish, or deploy unless explicitly requested.
+
+## Documents
+
+- [Architecture](docs/ARCHITECTURE.md): ownership, dependencies, and data flow.
+- [Verification](docs/VERIFICATION.md): risk levels, commands, side effects, and proof boundaries.
+- [Git workflow](docs/GIT_FLOW.md): existing branch, commit, and release conventions.
+- [Standards](docs/STANDARD.md): coding, API, error, and security contracts.
+- [Documentation rules](docs/AGENTS.md): edits under `docs/`.
 
 ## Package invariants
 
@@ -25,13 +35,8 @@ authoritative place and link to it elsewhere instead of copying it.
   must not contain credentials, URI/path/query, headers, bodies, raw exceptions,
   or stack traces.
 
-## Build and verification
+## Example builds
 
-- Build the example for only the ABI of the device being used. The default is
-  `android-arm64`; use `android-x64` only for an x86_64 emulator. Set
-  `EXAMPLE_ANDROID_TARGET_PLATFORMS` when building for that emulator.
-- Use `make clean` to remove generated build outputs and local project caches;
-  later builds recreate them.
-- For source changes, run `make verify` and inspect the diff. Run `make ci` for
-  CI or release-facing changes. For documentation-only changes, verify the
-  diff and affected links without running unrelated gates.
+Build the example for the device ABI only: default `android-arm64`, or
+`EXAMPLE_ANDROID_TARGET_PLATFORMS=android-x64` for an x86_64 emulator.
+Packaged-consumer gates retain their separate existing build profiles.

@@ -1,6 +1,8 @@
-# Claude Code guidance
+# FlutterSdkBase Claude Code guidance
 
-Follow the repository-wide contribution rules in [`AGENTS.md`](AGENTS.md).
-For edits under `docs/`, also follow [`docs/AGENTS.md`](docs/AGENTS.md).
-Keep project rules in those files and engineering contracts in their owning
-documents; do not duplicate them here.
+A Flutter SDK package with an independent example host. Its public API and error/security contracts live in [Architecture](docs/ARCHITECTURE.md) and [Standards](docs/STANDARD.md).
+
+Read [AGENTS.md](AGENTS.md) first and follow the relevant documents linked there.
+For edits under `docs/`, follow that directory's AGENTS.md when present.
+Keep workflow rules and engineering contracts in their owning documents;
+link to those sources instead of duplicating rules here.

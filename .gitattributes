@@ -1,0 +1,18 @@
+# Normalize text without rewriting existing tracked files.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.jar binary
+*.aar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.so binary
+*.keystore binary
+*.jks binary
