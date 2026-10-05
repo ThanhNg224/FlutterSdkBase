@@ -1,25 +1,23 @@
-# FlutterCoreBase Windsurf Rules
+# FlutterSdkBase Windsurf Rules
 
-## Architectural Boundaries
-- Feature-First Clean Architecture (`lib/features/<feature>/{domain, data, presentation}`).
-- Domain layer is pure Dart. Entities use `@freezed`.
-- Data layer implements domain repositories and uses `ErrorHandler.guard()`.
-- Presentation layer renders UI and delegates to Riverpod controllers.
+You are an expert Flutter engineer working on flutter_sdk_base. This is a **pure Flutter package with no native code** — not an application, not a plugin. It ships an SDK that host apps depend on.
 
-## Design System & UI Rules
-- Typography: Use **Inter** (`GoogleFonts.inter`), `AppTypography`, and `Theme.of(context).textTheme`.
-- Colors: Use `context.colors.<token>` (`AppSemanticColors`) for dynamic surfaces, borders, text, and status colors. Use `Theme.of(context).colorScheme` or `AppColors.primary` for brand accents. Never hardcode `Colors.grey`, `Colors.red`, `Color(0xFF...)`.
-- Spacing: Use `AppSpacing` tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) and `AppSpacing.radius*`.
-- Reuse: Always reuse `lib/core/widgets/` (`AppButton`, `AppCard`, `AppTextField`, `AppDialog`, `AppErrorWidget`, `AsyncValueWidget`).
+## Source of Truth
+Read `docs/` before implementing:
+- `docs/ARCHITECTURE.md` — the barrel boundary, single request path, and capability addition.
+- `docs/STANDARD.md` — public API, errors, observability, and test rules.
+- `docs/GIT_FLOW.md` — branching and commit conventions.
 
-## State Management & Storage
-- Riverpod Generator: `@riverpod` (auto-dispose) for screen controllers, `@Riverpod(keepAlive: true)` for singletons.
-- Storage: Always inject `localStorageServiceProvider` (`ILocalStorageService`). Define keys in `StorageKeys`.
-
-## Error Handling & Logging
-- Repositories return `Future<Either<Failure, T>>` (`fpdart`).
-- Logging: `const _log = AppLogger('<Scope>');` with `Redacted` wrappers. Never use `print()` or `debugPrint()`.
+## Non-negotiables
+- `lib/src/` may import `package:flutter/foundation.dart` and nothing else from Flutter. No `material.dart`, `widgets.dart`, `services.dart`, no `dart:io`. Tests may use `dart:io`; they never ship.
+- Only `lib/flutter_sdk_base.dart` and `lib/flutter_sdk_base_testing.dart` are public API, and they export with `show`. Everything else lives under `lib/src/`.
+- No public signature mentions `package:http` or any other transport implementation type.
+- Every public type is prefixed `Sdk`; every public member has a doc comment (`public_member_api_docs` is enabled).
+- No mutable static state — multiple `SdkClient` instances must run side by side cleanly.
+- `example/` never imports `lib/src/` and never uses relative imports into the package.
 
 ## Verification
-- Run `make codegen` when necessary.
-- Ensure `make analyze` passes with 0 warnings.
+- Run `make analyze` — must report `No issues found!`.
+- Run `make test` — all tests must pass.
+- Run `make boundary` — ensures zero Flutter UI and zero dart:io leaks into `lib/`.
+- Run `make verify` for the local pre-commit gate, or `make ci` before releases.
