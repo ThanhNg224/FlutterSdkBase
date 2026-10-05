@@ -1,23 +1,9 @@
-# FlutterSdkBase Cursor Rules
+# FlutterSdkBase Cursor guidance
 
-You are an expert Flutter engineer working on flutter_sdk_base. This is a **pure Flutter package with no native code** — not an application, not a plugin. It ships an SDK that host apps depend on.
+This repository contains the FlutterSdkBase SDK package and its independent example host.
 
-## Source of Truth
-Read `docs/` before implementing:
-- `docs/ARCHITECTURE.md` — the barrel boundary, single request path, and capability addition.
-- `docs/STANDARD.md` — public API, errors, observability, and test rules.
-- `docs/GIT_FLOW.md` — branching and commit conventions.
-
-## Non-negotiables
-- `lib/src/` may import `package:flutter/foundation.dart` and nothing else from Flutter. No `material.dart`, `widgets.dart`, `services.dart`, no `dart:io`. Tests may use `dart:io`; they never ship.
-- Only `lib/flutter_sdk_base.dart` and `lib/flutter_sdk_base_testing.dart` are public API, and they export with `show`. Everything else lives under `lib/src/`.
-- No public signature mentions `package:http` or any other transport implementation type.
-- Every public type is prefixed `Sdk`; every public member has a doc comment (`public_member_api_docs` is enabled).
-- No mutable static state — multiple `SdkClient` instances must run side by side cleanly.
-- `example/` never imports `lib/src/` and never uses relative imports into the package.
-
-## Verification
-- Run `make analyze` — must report `No issues found!`.
-- Run `make test` — all tests must pass.
-- Run `make boundary` — ensures zero Flutter UI and zero dart:io leaks into `lib/`.
-- Run `make verify` for the local pre-commit gate, or `make ci` before releases.
+Follow the repository-wide contribution rules in [AGENTS.md](AGENTS.md).
+Read only the relevant engineering documents linked from AGENTS.md before implementing.
+For edits under `docs/`, also follow [docs/AGENTS.md](docs/AGENTS.md).
+Keep workflow rules and engineering contracts in their owning documents;
+link to those sources instead of duplicating rules here.
