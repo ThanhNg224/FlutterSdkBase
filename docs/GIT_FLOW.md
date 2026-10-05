@@ -4,6 +4,10 @@
 
 ### 1. Branching Strategy (Gitflow)
 
+> **Lưu ý về Repository Base Template (Giai đoạn Solo Maintainer):**
+> - Đối với repo package base này, maintainer phát triển trực tiếp trên nhánh `main` để giữ quy trình tinh gọn.
+> - Sau khi nhân bản/đổi tên thành dự án SDK thực tế, toàn bộ quy trình phát triển và release sẽ vận hành đầy đủ theo mô hình GitFlow dưới đây.
+
 | Branch | Mục đích | Tạo từ | Merge vào | Xóa sau merge |
 | --- | --- | --- | --- | --- |
 | `main` | Code production ổn định, gắn tag release | — | — | Không |

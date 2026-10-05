@@ -1,28 +1,9 @@
-# FlutterCoreBase Cursor Rules
+# FlutterSdkBase Cursor guidance
 
-You are an expert Flutter engineer working on FlutterCoreBase. Always follow these strict rules:
+This repository contains the FlutterSdkBase SDK package and its independent example host.
 
-## Architectural Boundaries
-- Feature-First Clean Architecture (`lib/features/<feature>/{domain, data, presentation}`).
-- Domain layer is pure Dart (no `flutter/material.dart`, no platform channels). Entities use `@freezed`.
-- Data layer implements domain repository interfaces and wraps external calls with `ErrorHandler.guard()`.
-- Presentation layer renders UI and delegates state/events to Riverpod controllers.
-
-## Design System & UI Rules
-- Typography: Standard font is **Inter** (`GoogleFonts.inter`). Use `AppTypography.<slot>` or `Theme.of(context).textTheme.<slot>`. Never hardcode `TextStyle(fontSize: ...)`.
-- Colors: Always use `context.colors.<token>` (`AppSemanticColors`) for dynamic surfaces, borders, text, and status colors (`statusSuccess`, `statusWarning`, `statusError`, `brandAccent`, `track`). Use `Theme.of(context).colorScheme` or `AppColors.primary` for brand primary. Never use raw Flutter colors like `Colors.grey`, `Colors.red`, `Color(0xFF...)`.
-- Spacing: Always use `AppSpacing` tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) and `AppSpacing.radius*`. Never use arbitrary numbers.
-- Reuse: Check `lib/core/widgets/` (`AppButton`, `AppCard`, `AppTextField`, `AppDialog`, `AppErrorWidget`, `AsyncValueWidget`) before creating custom widgets.
-
-## State Management & Storage
-- Riverpod Generator: Use `@riverpod` (auto-dispose) for screen controllers, and `@Riverpod(keepAlive: true)` for singletons/core services.
-- Storage: Always inject `localStorageServiceProvider` (`ILocalStorageService`). Define all keys in `StorageKeys`. Never call `SharedPreferences.getInstance()` in features.
-
-## Error Handling & Logging
-- Repositories return `Future<Either<Failure, T>>` (`fpdart`).
-- Logging: Use `const _log = AppLogger('<Scope>');` with `Redacted` wrappers. Never use `print()` or `debugPrint()`.
-
-## Verification
-- Run `make codegen` after model or provider changes.
-- Ensure `make analyze` passes with 0 warnings.
-- Never write co-author trailers in commit messages.
+Follow the repository-wide contribution rules in [AGENTS.md](AGENTS.md).
+Read only the relevant engineering documents linked from AGENTS.md before implementing.
+For edits under `docs/`, also follow [docs/AGENTS.md](docs/AGENTS.md).
+Keep workflow rules and engineering contracts in their owning documents;
+link to those sources instead of duplicating rules here.

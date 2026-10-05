@@ -3,7 +3,6 @@ updates:
   # Flutter & Dart dependencies
   - package-ecosystem: "pub"
     directory: "/"
-    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -23,7 +22,6 @@ updates:
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"

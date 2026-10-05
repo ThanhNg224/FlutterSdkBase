@@ -1,25 +1,9 @@
-# FlutterCoreBase Windsurf Rules
+# FlutterSdkBase Windsurf guidance
 
-## Architectural Boundaries
-- Feature-First Clean Architecture (`lib/features/<feature>/{domain, data, presentation}`).
-- Domain layer is pure Dart. Entities use `@freezed`.
-- Data layer implements domain repositories and uses `ErrorHandler.guard()`.
-- Presentation layer renders UI and delegates to Riverpod controllers.
+This repository contains the FlutterSdkBase SDK package and its independent example host.
 
-## Design System & UI Rules
-- Typography: Use **Inter** (`GoogleFonts.inter`), `AppTypography`, and `Theme.of(context).textTheme`.
-- Colors: Use `context.colors.<token>` (`AppSemanticColors`) for dynamic surfaces, borders, text, and status colors. Use `Theme.of(context).colorScheme` or `AppColors.primary` for brand accents. Never hardcode `Colors.grey`, `Colors.red`, `Color(0xFF...)`.
-- Spacing: Use `AppSpacing` tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) and `AppSpacing.radius*`.
-- Reuse: Always reuse `lib/core/widgets/` (`AppButton`, `AppCard`, `AppTextField`, `AppDialog`, `AppErrorWidget`, `AsyncValueWidget`).
-
-## State Management & Storage
-- Riverpod Generator: `@riverpod` (auto-dispose) for screen controllers, `@Riverpod(keepAlive: true)` for singletons.
-- Storage: Always inject `localStorageServiceProvider` (`ILocalStorageService`). Define keys in `StorageKeys`.
-
-## Error Handling & Logging
-- Repositories return `Future<Either<Failure, T>>` (`fpdart`).
-- Logging: `const _log = AppLogger('<Scope>');` with `Redacted` wrappers. Never use `print()` or `debugPrint()`.
-
-## Verification
-- Run `make codegen` when necessary.
-- Ensure `make analyze` passes with 0 warnings.
+Follow the repository-wide contribution rules in [AGENTS.md](AGENTS.md).
+Read only the relevant engineering documents linked from AGENTS.md before implementing.
+For edits under `docs/`, also follow [docs/AGENTS.md](docs/AGENTS.md).
+Keep workflow rules and engineering contracts in their owning documents;
+link to those sources instead of duplicating rules here.
