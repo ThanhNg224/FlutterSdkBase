@@ -27,7 +27,7 @@ jobs:
           flutter-version: ${{ matrix.flutter != 'stable' && matrix.flutter || '' }}
           channel: stable
       - name: Set up Python for initializer checks
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
